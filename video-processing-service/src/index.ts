@@ -2,6 +2,7 @@ import express from "express";
 import ffmpeg from "fluent-ffmpeg"; // Import fluent-ffmpeg for video processing
 
 const app = express();
+app.use(express.json());
 
 app.post("/process-video", (req, res) => {
     // Expect path fo the input video file in the request body
