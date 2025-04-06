@@ -4,23 +4,27 @@
 import { Storage } from "@google-cloud/storage";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const storage = new Storage();
 
 // google cloud storage bucket strings has to be globally unique
 
 // Download from this bucket
-const rawVideoBucketName = "elevatr-raw-videos";
+const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
 
 // Upload to this bucket
-const processedVideoBucketName = "elevatr-processed-videos";
+const processedVideoBucketName = process.env.PROCESSED_VIDEO_BUCKET!;
 
 const localRawVideoPath = "./raw-videos";
 const localProcessedVideoPath = "./processed-videos";
 
 // Creates local directory within docker container for the raw files and processes files
-export function setUpDirectories() {
+export function setupDirectories() {
     ensureDirectoryExistence(localRawVideoPath);
+    ensureDirectoryExistence(localProcessedVideoPath);
 }
 
 /**
@@ -71,14 +75,14 @@ export async function downloadRawVideo(fileName: string) {
  * @returns A promise that resolves when the file has been uploaded.
  */
 
-export async function uploadProcessedVideo(filename: string) {
+export async function uploadProcessedVideo(fileName: string) {
     const bucket = storage.bucket(processedVideoBucketName);
-    await bucket.upload(`${localProcessedVideoPath}/${filename}`, {
-        destination: filename
+    await storage.bucket(processedVideoBucketName).upload(`${localProcessedVideoPath}/${fileName}`, {
+        destination: fileName
     })
-    console.log(`gs://${processedVideoBucketName}/${filename} uploaded to ${localProcessedVideoPath}/${filename}`);
+    console.log(`gs://${processedVideoBucketName}/${fileName} uploaded to ${localProcessedVideoPath}/${fileName}`);
     // Any one with a link can view this file without authentication
-    await bucket.file(filename).makePublic();
+    await bucket.file(fileName).makePublic();
 }
 
 /**
@@ -89,7 +93,7 @@ export async function uploadProcessedVideo(filename: string) {
  */
 
 export function deleteRawVideo(fileName: string) {
-    return deleteFile(`{localRawVideoPath}/${fileName}`)
+    return deleteFile(`${localRawVideoPath}/${fileName}`)
 }
 
 /**
@@ -111,7 +115,7 @@ export function deleteProcessedVideo(fileName: string) {
 
 function deleteFile(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        if(fs.existsSync(filePath)) {
+        if (fs.existsSync(filePath)) {
             fs.unlink(filePath, (err) => {
                 if (err) {
                     console.log(`Failed to delete path at ${filePath}`, err)
