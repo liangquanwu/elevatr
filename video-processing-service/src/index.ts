@@ -80,7 +80,6 @@ app.post("/process-video", async (req, res) => {
   res.status(200).send(`Video processing completed successfully.`);
 });
 
-console.log(process.env.PORT);
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
