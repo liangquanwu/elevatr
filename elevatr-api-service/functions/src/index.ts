@@ -3,9 +3,6 @@ import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import {Storage} from "@google-cloud/storage";
 import {onCall} from "firebase-functions/v2/https";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 admin.initializeApp();
 
@@ -13,7 +10,19 @@ const firestore = admin.firestore();
 const storage = new Storage();
 
 // Good place to implement name into env file
-const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+// const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+const rawVideoBucketName = "elevatr-raw-videos";
+
+const videoCollectionId = "videos";
+
+export interface Video {
+  id?: string,
+  uid?: string,
+  filename?: string,
+  status?: "processing" | "processed",
+  title?: string,
+  description?: string,
+}
 
 export const createUser = functions
   .region("us-east1")
@@ -54,5 +63,17 @@ export const generateUploadUrl = onCall(
     });
 
     return {url, fileName};
+  }
+);
+
+export const getVideos = onCall(
+  {region: "us-east1", maxInstances: 1, invoker: ["public"]},
+  async () => {
+    const snapshot = await firestore
+      .collection(videoCollectionId)
+      .limit(10)
+      .get();
+    const videos = snapshot.docs.map((doc) => doc.data());
+    return videos;
   }
 );

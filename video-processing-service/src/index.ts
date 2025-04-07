@@ -9,7 +9,6 @@ import {
 } from "./storage";
 import { isVideoNew, setVideo } from "./firestore";
 
-
 setupDirectories();
 
 const app = express();
@@ -39,17 +38,23 @@ app.post("/process-video", async (req, res) => {
 
   if (!isVideoNew(videoId)) {
     res.status(400).send("Bad Request: video already processing or processed");
-  }
-  else {
+    return;
+  } else {
     await setVideo(videoId, {
       id: videoId,
       uid: videoId.split("-")[0],
       status: "processing",
-    })
+    });
   }
 
   // Download the raw video from Cloud Storage
-  await downloadRawVideo(inputFileName);
+  try {
+    await downloadRawVideo(inputFileName);
+  } catch (err: any) {
+    console.error(`❌ Failed to download ${inputFileName}:`, err.message);
+    res.status(404).send(`Video file not found: ${inputFileName}`);
+    return;
+  }
 
   // Convert the video to 360p
   try {
@@ -62,15 +67,16 @@ app.post("/process-video", async (req, res) => {
     ]);
     console.error(err);
     res.status(500).send(`Internal Server Error: video processing failed.`);
+    return;
   }
 
   // Upload the processed video to Cloud storage
   await uploadProcessedVideo(outputFileName);
 
-  setVideo(videoId, {
+  await setVideo(videoId, {
     status: "processed",
     filename: outputFileName,
-  })
+  });
 
   await Promise.all([
     deleteRawVideo(inputFileName),
@@ -78,6 +84,7 @@ app.post("/process-video", async (req, res) => {
   ]);
 
   res.status(200).send(`Video processing completed successfully.`);
+  return;
 });
 
 const port = process.env.PORT || 3000;

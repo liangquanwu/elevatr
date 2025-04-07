@@ -19,12 +19,12 @@ const firestore = new Firestore();
 const videoCollectionId = 'videos';
 
 export interface Video {
-    id?: string;
-    uid?: string;
-    filename?: string;
-    status?: 'processing' | 'processed';
-    title?: string;
-    description?: string;
+    id?: string,
+    uid?: string,
+    filename?: string,
+    status?: 'processing' | 'processed',
+    title?: string,
+    description?: string
 }
 
 async function getVideo(videoId: string) {

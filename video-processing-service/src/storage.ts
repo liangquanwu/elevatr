@@ -13,10 +13,12 @@ const storage = new Storage();
 // google cloud storage bucket strings has to be globally unique
 
 // Download from this bucket
-const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+// const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+const rawVideoBucketName = "elevatr-raw-videos";
 
 // Upload to this bucket
-const processedVideoBucketName = process.env.PROCESSED_VIDEO_BUCKET!;
+// const processedVideoBucketName = process.env.PROCESSED_VIDEO_BUCKET!;
+const processedVideoBucketName = "elevatr-processed-videos";
 
 const localRawVideoPath = "./raw-videos";
 const localProcessedVideoPath = "./processed-videos";
