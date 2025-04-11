@@ -1,38 +1,24 @@
-import {httpsCallable} from "firebase/functions";
-import {functions} from "./firebase";
+import {getFunctions, httpsCallable} from 'firebase/functions';
 
-const generateUploadUrl = httpsCallable<{ fileExtension: string }, { url: string }>(functions, "generateUploadUrl");
-const getVideosCallable = httpsCallable(functions, "getVideos");
+import { getApp } from 'firebase/app';
+const functions = getFunctions(getApp(), 'us-east1');
 
-export interface Video {
-  id?: string;
-  uid?: string;
-  filename?: string;
-  status?: "processing" | "processed";
-  title?: string;
-  description?: string;
-}
-
+const generateUploadUrl = httpsCallable(functions, 'generateUploadUrl')
 
 export async function uploadVideo(file: File) {
-  const response = await generateUploadUrl({
-    fileExtension: file.name.split(".").pop() || "",
-  });
+    const response: any = await generateUploadUrl({
+        fileExtension: file.name.split('.').pop()
+    })
 
-  // Upload the file via the signed URL
-  // Also add the headers
-  await fetch(response?.data?.url, {
-    method: "PUT",
-    body: file,
-    headers: {
-      "Content-Type": file.type,
-    },
-  });
+    // Upload the file via the signed URL
+    // Also add the headers
+    await fetch(response?.data?.url, {
+        method: "PUT",
+        body: file,
+        headers: {
+            'Content-Type': file.type
+        }
+    });
 
-  return;
-}
-
-export async function getVideos() {
-  const response = await getVideosCallable();
-  return response.data as Video[];
+    return;
 }

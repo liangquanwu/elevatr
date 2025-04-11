@@ -8,8 +8,6 @@ import {
   onAuthStateChanged,
   User,
 } from "firebase/auth";
-import { getFunctions} from "firebase/functions";
-import { getApp } from 'firebase/app';
 
 // Create env files before deploying this
 
@@ -24,13 +22,10 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID!,
 };
 
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-export const functions = getFunctions(getApp(), 'us-east1');
-
 
 /**
  * Signs the user in with a Google popup.
