@@ -16,12 +16,12 @@ const rawVideoBucketName = "elevatr-raw-videos";
 const videoCollectionId = "videos";
 
 export interface Video {
-  id?: string,
-  uid?: string,
-  filename?: string,
-  status?: "processing" | "processed",
-  title?: string,
-  description?: string,
+  id?: string;
+  uid?: string;
+  filename?: string;
+  status?: "processing" | "processed";
+  title?: string;
+  description?: string;
 }
 
 export const createUser = functions
@@ -31,12 +31,48 @@ export const createUser = functions
     const userInfo = {
       uid: user.uid,
       email: user.email,
-      photoUrl: user.photoURL,
     };
     logger.info(`User Created: ${JSON.stringify(userInfo)}`);
 
     return firestore.collection("users").doc(user.uid).set(userInfo);
   });
+
+export const patchUserProfile = onCall(
+  {region: "us-east1", maxInstances: 1}, // Specify the region
+  async (request) => {
+    const {auth, data} = request;
+    if (!auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "You must be signed in"
+      );
+    }
+
+    const uid = auth.uid;
+
+    try {
+      await firestore.collection("users").doc(uid).update({
+        displayName: data.displayName,
+        bio: data.bio,
+        website: data.website,
+        accountType: data.accountType,
+        profilePicture: data.profilePictureUrl,
+        resume: data.resumeUrl,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      logger.error("Error updating user profile", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error updating user profile"
+      );
+    }
+  }
+);
 
 export const generateUploadUrl = onCall(
   {region: "us-east1", maxInstances: 1}, // Specify the region

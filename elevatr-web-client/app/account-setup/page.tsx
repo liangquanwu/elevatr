@@ -103,7 +103,7 @@ export default function AccountSetup() {
             onChange={(e) => {
               if (e.target.files) setProfilePicture(e.target.files[0]);
             }}
-            className="file:text-white file:bg-gray-500 border-0 file:border file:border-white file:px-4  file:rounded "
+            className="file:text-white border-0 file:border file:border-white file:px-4  file:rounded "
           />
         </div>
         <div className="space-y-1 pl-5 pr-5 pb-3">
@@ -118,7 +118,7 @@ export default function AccountSetup() {
             onChange={(e) => {
               if (e.target.files) setInfoFile(e.target.files[0]);
             }}
-            className="file:text-white file:bg-gray-500 border-0 file:border file:border-white file:px-4  file:rounded "
+            className="file:text-white border-0 file:border file:border-white file:px-4  file:rounded "
           />
         </div>
         <div className="space-y-1 pl-5 pr-5 pb-3">
@@ -142,7 +142,7 @@ export default function AccountSetup() {
         </div>
         <div className="flex justify-end">
            {/* Once user presses finish, we will patch (update) their datastore profile and also upload the files to the storage buckets */}
-          <Button className="mr-5 cursor-pointer">Finish</Button>
+          <Button className="mr-5 cursor-pointer" onClick={() => router.push("/dashboard")}>Finish</Button>
         </div>
       </div>
     </main>
