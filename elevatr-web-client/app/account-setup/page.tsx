@@ -9,6 +9,24 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "../../components/ui/label";
+import { patchUser, uploadPrivateDocument, uploadProfilePicture } from "../utilities/firebase/functions";
+
+interface UserProps {
+  uid: string,
+  email: string,
+  displayName: string,
+  bio?: string,
+  websiteUrl?: string,
+  accountType: string,
+  profilePictureUrl?: string,
+  resume?: string,
+  updatedAt: string,
+}
+
+interface UploadFileProps {
+  profilePicture: File | null,
+  infoFile: File | null,
+}
 
 export default function AccountSetup() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,126 +41,143 @@ export default function AccountSetup() {
 
   const router = useRouter();
 
+  const handleUpdateUser = async (user: UserProps) => {
+    const userData: UserProps = {
+      uid: user.uid,
+      email: user.email || "",
+      displayName: user.displayName || "",
+      bio: user.bio || "",
+      websiteUrl: user.websiteUrl || "",
+      accountType: user.accountType || "",
+      profilePictureUrl: user.profilePictureUrl || "",
+      resume: user.resume || "",
+      updatedAt: new Date().toISOString(),
+    };
+
+    await patchUser(userData);
+  };
+
+  const handleUploadFiles = async (files: UploadFileProps) => {
+    if (files.profilePicture) {
+      await uploadProfilePicture(files.profilePicture);
+    }
+    if (files.infoFile) {
+      await uploadPrivateDocument(files.infoFile);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChangedHelper((user) => {
       if (!user) {
-        router.push("/"); // redirect if not signed in
+        router.push("/");
       } else {
         setUser(user);
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, [router]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+      <main className="min-h-screen bg-white text-black flex items-center justify-center">
         <p className="text-xl">Checking credentials...</p>
       </main>
     );
   }
 
   return (
-    <main className="w-screen h-screen bg-gradient-to-br from-[#1E2122] to-[#111314] text-white flex items-center justify-center px-4">
-      <div className="items-center justify-center bg-[#2E3235] h-[650px] w-[450px] rounded-xl">
-        <h2 className="text-2xl font-bold p-5">Tell Us About Yourself</h2>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
+    <main className="min-h-screen bg-gradient-to-br from-white to-gray-100 text-black flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white border border-gray-200 p-8 rounded-2xl shadow-lg space-y-6">
+        <h2 className="text-2xl font-bold">Tell Us About Yourself</h2>
+
+        <div className="space-y-1">
           <Label>Account Type *</Label>
-          <RadioGroup
-            className="flex p-3 gap-30"
-            defaultValue="applicant"
-            onValueChange={(value) => {
-              setAccountType(value);
-            }}
-          >
+          <RadioGroup defaultValue="applicant" onValueChange={setAccountType} className="flex gap-6">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
-                value="applicant"
-                id="applicant"
-                className="accent-transparent bg-white checked:bg-white checked:border-white"
-              />
+              <RadioGroupItem value="applicant" id="applicant" className="accent-blue-600" />
               <Label htmlFor="applicant">Applicant</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem
-                value="startup"
-                id="startup"
-                className="accent-transparent bg-white checked:bg-white checked:border-white"
-              />
+              <RadioGroupItem value="startup" id="startup" className="accent-blue-600" />
               <Label htmlFor="startup">Start Up</Label>
             </div>
           </RadioGroup>
         </div>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
-          <Label className="pb-3">Display Name *</Label>
-          {accountType === "applicant" ? (
-            <Input
-              type="text"
-              placeholder="Enter your display name (Required)"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="bg-[#2E3235] text-white border border-gray-600 focus:border-white focus:ring-0"
-            />
-          ) : (
-            <Input
-              type="text"
-              placeholder="Enter your start up name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="bg-[#2E3235] text-white border border-gray-600 focus:border-white focus:ring-0"
-            />
-          )}
+
+        <div className="space-y-1">
+          <Label>Display Name *</Label>
+          <Input
+            type="text"
+            placeholder={accountType === "applicant" ? "Enter your display name (Required)" : "Enter your start up name (Required)"}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
         </div>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
-          <Label className="pb-1">Profile Picture *</Label>
+
+        <div className="space-y-1">
+          <Label>Profile Picture (Optional)</Label>
           <Input
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              if (e.target.files) setProfilePicture(e.target.files[0]);
-            }}
-            className="file:text-white border-0 file:border file:border-white file:px-4  file:rounded "
-          />
+            onChange={(e) => e.target.files && setProfilePicture(e.target.files[0])}
+            className="file:text-black file:border file:border-gray-400 file:px-1 file:rounded"
+            />
         </div>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
-          {accountType === "applicant" ? (
-            <Label className="pb-1">Resume (Optional)</Label>
-          ) : (
-            <Label className="pb-1">Pitch Deck/Info (Optional)</Label>
-          )}
+
+        <div className="space-y-1">
+          <Label>{accountType === "applicant" ? "Resume (Optional)" : "Pitch Deck/Info (Optional)"}</Label>
           <Input
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              if (e.target.files) setInfoFile(e.target.files[0]);
-            }}
-            className="file:text-white border-0 file:border file:border-white file:px-4  file:rounded "
+            onChange={(e) => e.target.files && setInfoFile(e.target.files[0])}
+            className="file:text-black file:border file:border-gray-400 file:px-1 file:rounded"
           />
         </div>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
-          <Label className="pb-3">Website or Portfolio (Optional)</Label>
+
+        <div className="space-y-1">
+          <Label>Website or Portfolio (Optional)</Label>
           <Input
             type="text"
             placeholder="Website or Portfolio (Optional)"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="bg-[#2E3235] text-white border border-gray-600 focus:border-white focus:ring-0"
           />
         </div>
-        <div className="space-y-1 pl-5 pr-5 pb-3">
-          <Label className="pb-3">Short Bio (Optional)</Label>
+
+        <div className="space-y-1">
+          <Label>Short Bio (Optional)</Label>
           <Textarea
             placeholder="Short bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="bg-[#2E3235] text-white border border-gray-600 focus:border-white focus:ring-0 h-30"
           />
         </div>
+
         <div className="flex justify-end">
-           {/* Once user presses finish, we will patch (update) their datastore profile and also upload the files to the storage buckets */}
-          <Button className="mr-5 cursor-pointer" onClick={() => router.push("/dashboard")}>Finish</Button>
+          <Button
+            className="mt-4"
+            onClick={() => {
+              try {
+                handleUpdateUser({
+                  displayName,
+                  accountType,
+                  bio,
+                  websiteUrl: url,
+                  profilePictureUrl: profilePicture?.name,
+                  resume: infoFile?.name,
+                  uid: user?.uid || "",
+                  email: user?.email || "",
+                } as UserProps);
+                handleUploadFiles({ profilePicture, infoFile });
+                router.push("/home");
+              } catch (error) {
+                console.error(error);
+              }
+            }}
+          >
+            Finish
+          </Button>
         </div>
       </div>
     </main>

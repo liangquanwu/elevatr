@@ -33,7 +33,8 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
+    // <Navbaraz></Navbar>
+    <main className="w-screen h-screen bg-gradient-to-br from-[#1E2122] to-[#111314] text-white flex items-center justify-center px-4">
       <h1 className="text-4xl">🚀 Welcome to your dashboard, {user?.displayName || "User"}!</h1>
       <button onClick={signOut} className="w-[300] bg-white">Log Out</button>
     </main>

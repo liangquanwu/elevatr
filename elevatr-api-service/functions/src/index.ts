@@ -10,7 +10,8 @@ const firestore = admin.firestore();
 const storage = new Storage();
 
 // Good place to implement name into env file
-// const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+const privateDocumentsBucket = "elevatr-private-documents";
+const profilePicturesBucket = "elevatr-profile-pictures";
 const rawVideoBucketName = "elevatr-raw-videos";
 
 const videoCollectionId = "videos";
@@ -37,7 +38,28 @@ export const createUser = functions
     return firestore.collection("users").doc(user.uid).set(userInfo);
   });
 
-export const patchUserProfile = onCall(
+export const getUser = onCall(
+  {region: "us-east1", maxInstances: 1}, // Specify the region
+  async (request) => {
+    const {auth} = request;
+    if (!auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "you must be signed in"
+      );
+    }
+    const uid = auth.uid;
+    const userDoc = await firestore.collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "User not found");
+    } else {
+      console.log("Return data");
+      return userDoc.data();
+    }
+  }
+);
+
+export const patchUser = onCall(
   {region: "us-east1", maxInstances: 1}, // Specify the region
   async (request) => {
     const {auth, data} = request;
@@ -47,19 +69,20 @@ export const patchUserProfile = onCall(
         "You must be signed in"
       );
     }
-
     const uid = auth.uid;
 
+    const sanitizedData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
+
     try {
-      await firestore.collection("users").doc(uid).update({
-        displayName: data.displayName,
-        bio: data.bio,
-        website: data.website,
-        accountType: data.accountType,
-        profilePicture: data.profilePictureUrl,
-        resume: data.resumeUrl,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore
+        .collection("users")
+        .doc(uid)
+        .update({
+          ...sanitizedData,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
       return {
         success: true,
@@ -71,6 +94,74 @@ export const patchUserProfile = onCall(
         "Error updating user profile"
       );
     }
+  }
+);
+
+export const generatePrivateDocumentFileUploadUrl = onCall(
+  {region: "us-east1", maxInstances: 1}, // Specify the region
+  async (request) => {
+    if (!request.auth) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated."
+      );
+    }
+
+    const {auth, data} = request;
+
+    const allowedExtensions = ["pdf"];
+    if (!allowedExtensions.includes(data.fileExtension)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unsupported file extension."
+      );
+    }
+
+    const bucket = storage.bucket(privateDocumentsBucket);
+
+    const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
+    const [url] = await bucket.file(fileName).getSignedUrl({
+      version: "v4",
+      action: "write",
+      expires: Date.now() + 15 * 60 * 1000,
+      contentType: data.contentType,
+    });
+
+    return {url, fileName};
+  }
+);
+
+export const generateProfilePicturesFileUploadUrl = onCall(
+  {region: "us-east1", maxInstances: 1}, // Specify the region
+  async (request) => {
+    if (!request.auth) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated."
+      );
+    }
+
+    const {auth, data} = request;
+
+    const allowedExtensions = ["jpg", "jpeg", "png", "pdf"];
+    if (!allowedExtensions.includes(data.fileExtension)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unsupported file extension."
+      );
+    }
+
+    const bucket = storage.bucket(profilePicturesBucket);
+
+    const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
+    const [url] = await bucket.file(fileName).getSignedUrl({
+      version: "v4",
+      action: "write",
+      expires: Date.now() + 15 * 60 * 1000,
+      contentType: data.contentType,
+    });
+
+    return {url, fileName};
   }
 );
 
@@ -97,7 +188,6 @@ export const generateUploadUrl = onCall(
       action: "write",
       expires: Date.now() + 15 * 60 * 1000,
     });
-
     return {url, fileName};
   }
 );
