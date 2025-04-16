@@ -21,10 +21,12 @@ const videoCollectionId = 'videos';
 export interface Video {
     id?: string,
     uid?: string,
+    videoType?: string,
     filename?: string,
     status?: 'processing' | 'processed',
     title?: string,
     description?: string
+    createdAt?: string,
 }
 
 async function getVideo(videoId: string) {

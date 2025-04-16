@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import  Upload  from "../navbar/upload";
+import  Upload  from "../upload/upload";
 import Navbar from "../navbar/navbar";
 
 export default function HomePage() {

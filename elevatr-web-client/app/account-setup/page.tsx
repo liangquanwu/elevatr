@@ -14,6 +14,7 @@ import { patchUser, uploadPrivateDocument, uploadProfilePicture } from "../utili
 interface UserProps {
   uid: string,
   email: string,
+  lastSeenIndex?: number,
   displayName: string,
   bio?: string,
   websiteUrl?: string,
@@ -45,6 +46,7 @@ export default function AccountSetup() {
     const userData: UserProps = {
       uid: user.uid,
       email: user.email || "",
+      lastSeenIndex: user.lastSeenIndex || 0,
       displayName: user.displayName || "",
       bio: user.bio || "",
       websiteUrl: user.websiteUrl || "",
@@ -168,6 +170,7 @@ export default function AccountSetup() {
                   resume: infoFile?.name,
                   uid: user?.uid || "",
                   email: user?.email || "",
+                  lastSeenIndex: 0,
                 } as UserProps);
                 handleUploadFiles({ profilePicture, infoFile });
                 router.push("/home");

@@ -32,7 +32,8 @@ app.post("/process-video", async (req, res) => {
     res.status(400).send("Invalid message payload received");
   }
 
-  const inputFileName = data.name; // format of <UID>-<DATE>.<EXTENSION>
+  const inputFileName = data.name; // format of <UID>-<accounttype>-<DATE>.<EXTENSION>
+  const accountType = data.name.split("-")[1];
   const outputFileName = `processed-${inputFileName}`;
   const videoId = inputFileName.split(".")[0];
 
@@ -43,13 +44,15 @@ app.post("/process-video", async (req, res) => {
     await setVideo(videoId, {
       id: videoId,
       uid: videoId.split("-")[0],
+      videoType: accountType,
       status: "processing",
+      createdAt: new Date().toISOString(),
     });
   }
 
   // Download the raw video from Cloud Storage
   try {
-    await downloadRawVideo(inputFileName);
+    await downloadRawVideo(inputFileName, accountType);
   } catch (err: any) {
     console.error(`❌ Failed to download ${inputFileName}:`, err.message);
     res.status(404).send(`Video file not found: ${inputFileName}`);
@@ -71,7 +74,7 @@ app.post("/process-video", async (req, res) => {
   }
 
   // Upload the processed video to Cloud storage
-  await uploadProcessedVideo(outputFileName);
+  await uploadProcessedVideo(outputFileName, accountType);
 
   await setVideo(videoId, {
     status: "processed",

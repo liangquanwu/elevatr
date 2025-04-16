@@ -2,7 +2,7 @@ import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import {Storage} from "@google-cloud/storage";
-import {onCall} from "firebase-functions/v2/https";
+import {HttpsError, onCall} from "firebase-functions/v2/https";
 
 admin.initializeApp();
 
@@ -12,7 +12,8 @@ const storage = new Storage();
 // Good place to implement name into env file
 const privateDocumentsBucket = "elevatr-private-documents";
 const profilePicturesBucket = "elevatr-profile-pictures";
-const rawVideoBucketName = "elevatr-raw-videos";
+const rawStartupVideoBucketName = "elevatr-startup-raw-videos";
+const rawApplicantVideoBucketName = "elevatr-applicant-raw-videos";
 
 const videoCollectionId = "videos";
 
@@ -32,6 +33,7 @@ export const createUser = functions
     const userInfo = {
       uid: user.uid,
       email: user.email,
+      lastSeenIndex: 0,
     };
     logger.info(`User Created: ${JSON.stringify(userInfo)}`);
 
@@ -53,7 +55,6 @@ export const getUser = onCall(
     if (!userDoc.exists) {
       throw new functions.https.HttpsError("not-found", "User not found");
     } else {
-      console.log("Return data");
       return userDoc.data();
     }
   }
@@ -177,10 +178,23 @@ export const generateUploadUrl = onCall(
     }
 
     const {auth, data} = request;
-    const bucket = storage.bucket(rawVideoBucketName);
+    const uid = auth.uid;
+    const userDoc = await firestore.collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "User not found");
+    }
+    const accountType = userDoc.data()?.accountType;
+    const bucket = storage.bucket(
+      accountType === "applicant" ?
+        rawApplicantVideoBucketName :
+        rawStartupVideoBucketName
+    );
 
     // Generate a unique file name
-    const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
+    const fileName = `${auth.uid}-${accountType}-${Date.now()}.${
+      data.fileExtension}`;
+
+    console.log(fileName);
 
     // Get a v4 signed URL for uploading a file
     const [url] = await bucket.file(fileName).getSignedUrl({
@@ -193,13 +207,32 @@ export const generateUploadUrl = onCall(
 );
 
 export const getVideos = onCall(
-  {region: "us-east1", maxInstances: 1, invoker: ["public"]},
-  async () => {
-    const snapshot = await firestore
+  {region: "us-east1", maxInstances: 1, invoker: ["firebaseauthusers"]},
+  async (req) => {
+    const uid = req.auth?.uid;
+    if (!uid) {
+      throw new HttpsError("unauthenticated", "Sign in first.");
+    }
+
+    // const {accountType} = req.data || {};
+
+    const queryRef = firestore
       .collection(videoCollectionId)
-      .limit(10)
-      .get();
-    const videos = snapshot.docs.map((doc) => doc.data());
-    return videos;
+      // .where("videoType", "==", "startup")
+      .orderBy("createdAt", "asc")
+      .limit(50);
+
+
+    const snapshot = await queryRef.get();
+    const videos = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return {videos};
   }
 );
+
+const srcLink = `https://storage.googleapis.com/elevatr-${
+  account.accountType === "startup" ? "applicant" : "startup"
+}-processed-videos`;

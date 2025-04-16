@@ -14,11 +14,10 @@ const storage = new Storage();
 
 // Download from this bucket
 // const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
-const rawVideoBucketName = "elevatr-raw-videos";
-
-// Upload to this bucket
-// const processedVideoBucketName = process.env.PROCESSED_VIDEO_BUCKET!;
-const processedVideoBucketName = "elevatr-processed-videos";
+const rawStartupVideoBucketName = "elevatr-startup-raw-videos";
+const rawApplicantVideoBucketName = "elevatr-applicant-raw-videos";
+const processedStartupVideoBucketName = "elevatr-startup-processed-videos";
+const processedApplicantVideoBucketName = "elevatr-applicant-processed-videos";
 
 const localRawVideoPath = "./raw-videos";
 const localProcessedVideoPath = "./processed-videos";
@@ -40,7 +39,7 @@ export function setupDirectories() {
 export function convertVideo(rawVideoName: string, processedVideoName: string) {
     return new Promise<void>((resolve, reject) => {
         ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
-        .outputOptions("-vf", "scale=-1:1080") // Scale the video to 360p
+        .outputOptions("-vf", "scale=-2:1080") // Scale the video to 360p
         .on("end", () => {
             console.log("Processing finished successfully")
             resolve();
@@ -53,7 +52,6 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
     });
 }
 
-
 /**
  * Converts a raw video to a processed format.
  *
@@ -63,12 +61,12 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
  */
 
 
-export async function downloadRawVideo(fileName: string) {
-    await storage.bucket(rawVideoBucketName)
+export async function downloadRawVideo(fileName: string, accountType: string) {
+    await storage.bucket(accountType === "applicant" ? rawApplicantVideoBucketName : rawStartupVideoBucketName)
         .file(fileName)
         .download({destination: `${localRawVideoPath}/${fileName}`})
 
-    console.log(`gs://${rawVideoBucketName}/${fileName} downloaded to ${localRawVideoPath}/${fileName}`);
+    console.log(`gs://${accountType === "applicant" ? rawApplicantVideoBucketName : rawStartupVideoBucketName}/${fileName} downloaded to ${localRawVideoPath}/${fileName}`);
 }
 
 /**
@@ -77,14 +75,15 @@ export async function downloadRawVideo(fileName: string) {
  * @returns A promise that resolves when the file has been uploaded.
  */
 
-export async function uploadProcessedVideo(fileName: string) {
-    const bucket = storage.bucket(processedVideoBucketName);
-    await storage.bucket(processedVideoBucketName).upload(`${localProcessedVideoPath}/${fileName}`, {
+export async function uploadProcessedVideo(fileName: string, accountType: string) {
+    const bucket = storage.bucket(accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName);
+    await storage.bucket(accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName).upload(`${localProcessedVideoPath}/${fileName}`, {
         destination: fileName
     })
-    console.log(`gs://${processedVideoBucketName}/${fileName} uploaded to ${localProcessedVideoPath}/${fileName}`);
+    console.log(`gs://${accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName}/${fileName} uploaded to ${localProcessedVideoPath}/${fileName}`);
     // Any one with a link can view this file without authentication
     await bucket.file(fileName).makePublic();
+    // see what else we need to add here for authentication
 }
 
 /**

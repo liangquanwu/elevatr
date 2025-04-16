@@ -14,6 +14,7 @@ interface SignInProps {
 interface UserProps {
   uid: string;
   email: string;
+  lastSeenIndex: number;
   displayName: string;
   bio: string;
   website: string;
@@ -31,7 +32,6 @@ export default function SignIn({ user }: SignInProps) {
       if (!user) {
         return;
       }
-      console.log(user);
       const result = await getUser(user?.uid);
       const userData = result.data as UserProps;
       if (userData?.accountType) {

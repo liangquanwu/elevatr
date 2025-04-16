@@ -20,6 +20,7 @@ export const getUser = httpsCallable(functions, 'getUser')
 export const createUser = httpsCallable(functions, 'createUser')
 export const patchUser = httpsCallable(functions, 'patchUser')
 export const generateUploadUrl = httpsCallable(functions, 'generateUploadUrl')
+export const getVideos = httpsCallable(functions, 'getVideos')
 
 
 export async function uploadProfilePicture(file: File) {
@@ -27,7 +28,6 @@ export async function uploadProfilePicture(file: File) {
         fileExtension: file.name.split('.').pop(),
         contentType: file.type
     })
-    console.log()
     // Upload the file via the signed URL
     // Also add the headers
     await fetch(response?.data?.url, {

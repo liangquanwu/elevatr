@@ -3,7 +3,7 @@
 import { onAuthStateChangedHelper } from "./utilities/firebase/firebase";
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
-import SignIn from "./navbar/sign-in";
+import SignIn from "./signin/sign-in";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
