@@ -21,6 +21,7 @@ export const createUser = httpsCallable(functions, 'createUser')
 export const patchUser = httpsCallable(functions, 'patchUser')
 export const generateUploadUrl = httpsCallable(functions, 'generateUploadUrl')
 export const getVideos = httpsCallable(functions, 'getVideos')
+export const likeVideo = httpsCallable(functions, 'likeVideos')
 
 
 export async function uploadProfilePicture(file: File) {

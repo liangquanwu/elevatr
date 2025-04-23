@@ -5,7 +5,6 @@ import {
   Settings,
   Home,
   ListVideo,
-  MessageCircleHeart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -43,9 +42,16 @@ export default function Navbar() {
         <Button
           variant="ghost"
           className="flex items-center gap-2"
-          onClick={() => router.push("/home")}
+          onClick={() => router.push(`/user/${user?.uid}`)}
         >
-          <Home className="h-4 w-4" onClick={() => router.push("/home")} /> Home
+          <Home className="h-4 w-4" onClick={() => router.push(`/user/${user?.uid}`)} /> Home
+        </Button>
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2"
+          onClick={() => router.push("/upload-page")}
+        >
+          <UploadCloud className="h-4 w-4" onClick={() => router.push("/upload-page")} /> Upload
         </Button>
         <Button
           variant="ghost"
@@ -57,13 +63,6 @@ export default function Navbar() {
             onClick={() => router.push("/swipe")}
           />{" "}
           Swipe
-        </Button>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-2"
-          onClick={() => router.push("/chat")}
-        >
-          <MessageCircleHeart className="h-4 w-4" /> Chat
         </Button>
         <Button
           variant="ghost"
