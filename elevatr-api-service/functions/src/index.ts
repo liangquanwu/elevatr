@@ -294,3 +294,24 @@ export const likeVideos = onCall(
     return {matched: false};
   }
 );
+
+export const getUsersByIds = onCall(
+  {region: "us-east1", maxInstances: 1, invoker: ["firebaseauthusers"]},
+  async (request) => {
+    const {ids} = request.data;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "IDs must be a non-empty array."
+      );
+    }
+
+    const usersSnapshot = await firestore.getAll(
+      ...ids.map((id) => firestore.doc(`users/${id}`))
+    );
+    return usersSnapshot.map((docSnap) => ({
+      uid: docSnap.id,
+      ...docSnap.data(),
+    }));
+  }
+);

@@ -9,25 +9,31 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "../../components/ui/label";
-import { patchUser, uploadPrivateDocument } from "../utilities/firebase/functions";
+import {
+  patchUser,
+  uploadPrivateDocument,
+} from "../utilities/firebase/functions";
 
 interface UserProps {
-  uid: string,
-  email: string,
-  lastSeenIndex?: number,
-  displayName: string,
-  bio?: string,
-  websiteUrl?: string,
-  accountType: string,
-  profilePictureUrl?: string,
-  resume?: string,
-  updatedAt: string,
-  likes: string[]
-  matches: string[],
+  uid: string;
+  email: string;
+  lastSeenIndex?: number;
+  displayName: string;
+  updatedAt: string;
+  likes: string[];
+  matches: string[];
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  accountType: string;
+  profilePictureUrl?: string;
+  resume?: string;
+  linkedinUsername?: string;
+  githubUsername?: string;
 }
 
 interface UploadFileProps {
-  infoFile: File | null,
+  infoFile: File | null;
 }
 
 export default function AccountSetup() {
@@ -35,8 +41,11 @@ export default function AccountSetup() {
   const [loading, setLoading] = useState(true);
 
   const [accountType, setAccountType] = useState("applicant");
-  const [displayName, setDisplayName] = useState("");
-  const [infoFile, setInfoFile] = useState<File | null>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [linkedinUsername, setLinkedinUsername] = useState("");
+  const [githubUsername, setGithubUsername] = useState("");
+
   const [url, setUrl] = useState("");
   const [bio, setBio] = useState("");
 
@@ -47,15 +56,15 @@ export default function AccountSetup() {
       uid: user.uid,
       email: user.email || "",
       lastSeenIndex: user.lastSeenIndex || 0,
-      displayName: user.displayName || "",
+      displayName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
       bio: user.bio || "",
-      websiteUrl: user.websiteUrl || "",
       accountType: user.accountType || "",
-      resume: user.resume || "",
       likes: user.likes || [],
       matches: user.matches || [],
       updatedAt: new Date().toISOString(),
       profilePictureUrl: user.profilePictureUrl,
+      linkedinUsername: user.linkedinUsername || "",
+      githubUsername: user.githubUsername || "",
     };
 
     await patchUser(userData);
@@ -87,92 +96,120 @@ export default function AccountSetup() {
     );
   }
 
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    await handleUpdateUser({
+      uid: user.uid,
+      email: user.email ?? "",
+      accountType,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`,
+      bio,
+      profilePictureUrl: user.photoURL ?? "",
+      updatedAt: new Date().toISOString(),
+      likes: [],
+      matches: [],
+      linkedinUsername,
+      githubUsername,
+    });
+
+    router.push(`/user/${user.uid}`);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-white to-gray-100 text-black flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white border border-gray-200 p-8 rounded-2xl shadow-lg space-y-6">
-        <h2 className="text-2xl font-bold">Tell Us About Yourself</h2>
+      <form onSubmit={onSubmit}>
+        <div className="w-[50vw] max-w-md bg-white border border-gray-200 p-8 rounded-2xl shadow-lg space-y-6">
+          <h2 className="text-2xl font-bold">Tell Us About Yourself</h2>
 
-        <div className="space-y-1">
-          <Label>Account Type *</Label>
-          <RadioGroup defaultValue="applicant" onValueChange={setAccountType} className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="applicant" id="applicant" className="accent-blue-600" />
-              <Label htmlFor="applicant">Applicant</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="startup" id="startup" className="accent-blue-600" />
-              <Label htmlFor="startup">Start Up</Label>
-            </div>
-          </RadioGroup>
-        </div>
+          <div className="space-y-1">
+            <Label>Account Type *</Label>
+            <RadioGroup
+              defaultValue="applicant"
+              onValueChange={setAccountType}
+              className="flex gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value="applicant"
+                  id="applicant"
+                  className="accent-blue-600"
+                />
+                <Label htmlFor="applicant">Applicant</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value="startup"
+                  id="startup"
+                  className="accent-blue-600"
+                />
+                <Label htmlFor="startup">Start Up</Label>
+              </div>
+            </RadioGroup>
+          </div>
 
-        <div className="space-y-1">
-          <Label>Display Name *</Label>
-          <Input
-            type="text"
-            placeholder={accountType === "applicant" ? "Enter your display name (Required)" : "Enter your start up name (Required)"}
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </div>
+          <div className="space-y-1">
+            <Label>First Name *</Label>
+            <Input
+              required
+              minLength={2}
+              type="text"
+              placeholder={"Enter your first name (Required)"}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </div>
 
-        <div className="space-y-1">
-          <Label>{accountType === "applicant" ? "Resume (Optional)" : "Pitch Deck/Info (Optional)"}</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files && setInfoFile(e.target.files[0])}
-            className="file:text-black file:border file:border-gray-400 file:px-1 file:rounded"
-          />
-        </div>
+          <div className="space-y-1">
+            <Label>Last Name *</Label>
+            <Input
+              required
+              minLength={2}
+              type="text"
+              placeholder={"Enter your last name (Required)"}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
 
-        <div className="space-y-1">
-          <Label>Website or Portfolio (Optional)</Label>
-          <Input
-            type="text"
-            placeholder="Website or Portfolio (Optional)"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-        </div>
+          <div className="space-y-1">
+            <Label>Linkedin Username</Label>
+            <Input
+              type="text"
+              placeholder={"Enter your linkedin name (optional)"}
+              value={linkedinUsername}
+              onChange={(e) => setLinkedinUsername(e.target.value)}
+            />
+          </div>
 
-        <div className="space-y-1">
-          <Label>Short Bio (Optional)</Label>
-          <Textarea
-            placeholder="Short bio"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-          />
-        </div>
+          <div className="space-y-1">
+            <Label>Github Username</Label>
+            <Input
+              type="text"
+              placeholder={"Enter your github name (optional)"}
+              value={githubUsername}
+              onChange={(e) => setGithubUsername(e.target.value)}
+            />
+          </div>
 
-        <div className="flex justify-end">
-          <Button
-            className="mt-4"
-            onClick={() => {
-              console.log("profile Picture URL", user?.photoURL);
-              try {
-                handleUpdateUser({
-                  displayName,
-                  accountType,
-                  bio,
-                  websiteUrl: url,
-                  resume: infoFile?.name,
-                  uid: user?.uid || "",
-                  email: user?.email || "",
-                  lastSeenIndex: 0,
-                  profilePictureUrl: user?.photoURL || "",
-                } as UserProps);
-                handleUploadFiles({ infoFile });
-                router.push(`/user/${user?.uid}`);
-              } catch (error) {
-                console.error(error);
-              }
-            }}
-          >
-            Finish
-          </Button>
+          <div className="space-y-1">
+            <Label>Short Bio (Optional)</Label>
+            <Textarea
+              required
+              placeholder="Short bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="submit">Submit</Button>
+          </div>
         </div>
-      </div>
+      </form>
     </main>
   );
 }

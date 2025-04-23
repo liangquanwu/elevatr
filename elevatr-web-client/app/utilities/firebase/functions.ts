@@ -22,6 +22,7 @@ export const patchUser = httpsCallable(functions, 'patchUser')
 export const generateUploadUrl = httpsCallable(functions, 'generateUploadUrl')
 export const getVideos = httpsCallable(functions, 'getVideos')
 export const likeVideo = httpsCallable(functions, 'likeVideos')
+export const getUsersByIds = httpsCallable(functions, 'getUsersByIds')
 
 
 export async function uploadProfilePicture(file: File) {
@@ -77,3 +78,5 @@ export async function uploadVideo(file: File) {
 
     return;
 }
+
+
