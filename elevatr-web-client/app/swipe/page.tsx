@@ -6,41 +6,60 @@ import { useState, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { getVideos, getUser, patchUser, likeVideo } from "../utilities/firebase/functions";
+import {
+  getVideos,
+  getUser,
+  patchUser,
+  likeVideo,
+} from "../utilities/firebase/functions";
 import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
 import { User } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner"; 
 
 interface UserProps {
-  uid: string,
-  email: string,
-  lastSeenIndex?: number,
-  displayName: string,
-  bio?: string,
-  websiteUrl?: string,
-  accountType: string,
-  profilePictureUrl: string,
-  resume?: string,
-  updatedAt: string,
+  data: {
+    uid: string;
+    email: string;
+    lastSeenIndex?: number;
+    displayName: string;
+    bio?: string;
+    websiteUrl?: string;
+    accountType: string;
+    profilePictureUrl: string;
+    resume?: string;
+    updatedAt: string;
+  }
 }
 
 interface VideoProps {
-  id: string,
-  uid: string,
-  videoType: string,
-  filename: string,
-  status: 'processing' | 'processed',
-  title: string,
-  description: string
+  data: {
+    id: string;
+    uid: string;
+    videoType: string;
+    filename: string;
+    status: "processing" | "processed";
+    title: string;
+    description: string;
+  }
 }
 
+interface matchProps {
+  data: {
+    matched: boolean;
+  }
+}
+
+
 export default function SwipePage() {
-  
   const [videos, setVideos] = useState([]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(null);
   const [accountType, setAccountType] = useState("applicant");
 
   const [user, setUser] = useState<User | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedHelper((user) => {
@@ -53,42 +72,46 @@ export default function SwipePage() {
   useEffect(() => {
     const fetchVideos = async () => {
       if (!user) return;
-      const account = await getUser(user.uid) as unknown as UserProps;
+      const account = (await getUser(user.uid)) as unknown as UserProps;
       if (!account) {
-        return
+        return;
       }
       setAccountType(account.data.accountType); // also update state if needed
       const vids = await getVideos({
-        videoType: account.data.accountType === "startup" ? "applicant" : "startup"
-      });      
+        videoType:
+          account.data.accountType === "startup" ? "applicant" : "startup",
+      });
       const processedVideos = Object.values(vids.data.videos).filter((vid) => {
         return vid.status == "processed";
-      })
+      });
       setVideos(processedVideos);
     };
 
-  fetchVideos();
-
+    fetchVideos();
   }, [user]);
 
   const handleSwipe = async (dir) => {
-    if (videos && index >= videos.length) return console.log("No more videos")
-
+    if (videos && index >= videos.length) return console.log("No more videos");
 
     if (dir === "right") {
       // this means they swiped right
       // Check if we have liked this video before: if not (Add this video to our check)
       // Check if the other person has liked us before
-      // If both liked each other add to the match fire store of each user and do some frontend thing. 
+      // If both liked each other add to the match fire store of each user and do some frontend thing.
 
-      const result = likeVideo({uid: (videos[index] as VideoProps).uid})
-      // we gotta make this work 
+      const result = (await likeVideo({
+        uid: (videos[index] as VideoProps).uid,
+      })) as unknown as matchProps;
+      if (result?.data?.matched) {
+        console.log("hi");
+        toast.success("🎉 You matched!", { duration: 2000 });
+      }
+      // we gotta make this work
     }
 
-
     await patchUser({
-      lastSeenIndex: index + 1
-    })
+      lastSeenIndex: index + 1,
+    });
 
     setDirection(dir);
     setTimeout(() => {
@@ -103,7 +126,7 @@ export default function SwipePage() {
     preventScrollOnSwipe: true,
     trackMouse: true,
   });
-  
+
   const currentVideo = videos[index];
 
   return (
@@ -135,7 +158,9 @@ export default function SwipePage() {
                   <Card className="overflow-hidden">
                     <CardContent className="p-0">
                       <video
-                        src={`https://storage.googleapis.com/elevatr-${accountType === "startup"? "applicant" : "startup"}-processed-videos/${currentVideo.filename}`}
+                        src={`https://storage.googleapis.com/elevatr-${
+                          accountType === "startup" ? "applicant" : "startup"
+                        }-processed-videos/${currentVideo.filename}`}
                         controls
                         autoPlay
                         className="w-full h-[500px] object-cover"
@@ -145,9 +170,12 @@ export default function SwipePage() {
                 </motion.div>
               )}
             </AnimatePresence>
-  
+
             <div className="flex gap-4 mt-4">
               <Button onClick={() => handleSwipe("left")}>Reject</Button>
+              <Button onClick={() => router.push(`/user/${currentVideo.uid}`)}>
+                View Profile
+              </Button>
               <Button onClick={() => handleSwipe("right")}>Like</Button>
             </div>
           </div>
