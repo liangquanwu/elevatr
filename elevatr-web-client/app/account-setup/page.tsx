@@ -9,7 +9,7 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "../../components/ui/label";
-import { patchUser, uploadPrivateDocument, uploadProfilePicture } from "../utilities/firebase/functions";
+import { patchUser, uploadPrivateDocument } from "../utilities/firebase/functions";
 
 interface UserProps {
   uid: string,
@@ -22,10 +22,11 @@ interface UserProps {
   profilePictureUrl?: string,
   resume?: string,
   updatedAt: string,
+  likes: string[]
+  matches: string[],
 }
 
 interface UploadFileProps {
-  profilePicture: File | null,
   infoFile: File | null,
 }
 
@@ -35,7 +36,6 @@ export default function AccountSetup() {
 
   const [accountType, setAccountType] = useState("applicant");
   const [displayName, setDisplayName] = useState("");
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [infoFile, setInfoFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [bio, setBio] = useState("");
@@ -51,18 +51,17 @@ export default function AccountSetup() {
       bio: user.bio || "",
       websiteUrl: user.websiteUrl || "",
       accountType: user.accountType || "",
-      profilePictureUrl: user.profilePictureUrl || "",
       resume: user.resume || "",
+      likes: user.likes || [],
+      matches: user.matches || [],
       updatedAt: new Date().toISOString(),
+      profilePictureUrl: user.profilePictureUrl,
     };
 
     await patchUser(userData);
   };
 
   const handleUploadFiles = async (files: UploadFileProps) => {
-    if (files.profilePicture) {
-      await uploadProfilePicture(files.profilePicture);
-    }
     if (files.infoFile) {
       await uploadPrivateDocument(files.infoFile);
     }
@@ -118,16 +117,6 @@ export default function AccountSetup() {
         </div>
 
         <div className="space-y-1">
-          <Label>Profile Picture (Optional)</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files && setProfilePicture(e.target.files[0])}
-            className="file:text-black file:border file:border-gray-400 file:px-1 file:rounded"
-            />
-        </div>
-
-        <div className="space-y-1">
           <Label>{accountType === "applicant" ? "Resume (Optional)" : "Pitch Deck/Info (Optional)"}</Label>
           <Input
             type="file"
@@ -160,20 +149,21 @@ export default function AccountSetup() {
           <Button
             className="mt-4"
             onClick={() => {
+              console.log("profile Picture URL", user?.photoURL);
               try {
                 handleUpdateUser({
                   displayName,
                   accountType,
                   bio,
                   websiteUrl: url,
-                  profilePictureUrl: profilePicture?.name,
                   resume: infoFile?.name,
                   uid: user?.uid || "",
                   email: user?.email || "",
                   lastSeenIndex: 0,
+                  profilePictureUrl: user?.photoURL || "",
                 } as UserProps);
-                handleUploadFiles({ profilePicture, infoFile });
-                router.push("/home");
+                handleUploadFiles({ infoFile });
+                router.push(`/user/${user?.uid}`);
               } catch (error) {
                 console.error(error);
               }

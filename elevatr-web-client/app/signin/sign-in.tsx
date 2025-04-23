@@ -19,7 +19,7 @@ interface UserProps {
   bio: string;
   website: string;
   accountType: string;
-  profilePicture: string;
+  // profilePicture: string;
   resume: string;
   updatedAt: string;
 }
@@ -35,7 +35,7 @@ export default function SignIn({ user }: SignInProps) {
       const result = await getUser(user?.uid);
       const userData = result.data as UserProps;
       if (userData?.accountType) {
-        router.push("/home");
+        router.push(`/user/${userData.uid}`);
       } else {
         router.push("/account-setup");
       }

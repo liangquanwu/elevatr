@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { getVideos, getUser, patchUser } from "../utilities/firebase/functions";
+import { getVideos, getUser, patchUser, likeVideo } from "../utilities/firebase/functions";
 import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
 import { User } from "firebase/auth";
 
@@ -18,7 +18,7 @@ interface UserProps {
   bio?: string,
   websiteUrl?: string,
   accountType: string,
-  profilePictureUrl?: string,
+  profilePictureUrl: string,
   resume?: string,
   updatedAt: string,
 }
@@ -54,8 +54,13 @@ export default function SwipePage() {
     const fetchVideos = async () => {
       if (!user) return;
       const account = await getUser(user.uid) as unknown as UserProps;
-      setIndex(account.data.lastSeenIndex || 0);
-      const vids = await getVideos({accountType: account.accountType === "startup" ? "applicant" : "startup"});
+      if (!account) {
+        return
+      }
+      setAccountType(account.data.accountType); // also update state if needed
+      const vids = await getVideos({
+        videoType: account.data.accountType === "startup" ? "applicant" : "startup"
+      });      
       const processedVideos = Object.values(vids.data.videos).filter((vid) => {
         return vid.status == "processed";
       })
@@ -72,8 +77,12 @@ export default function SwipePage() {
 
     if (dir === "right") {
       // this means they swiped right
+      // Check if we have liked this video before: if not (Add this video to our check)
+      // Check if the other person has liked us before
+      // If both liked each other add to the match fire store of each user and do some frontend thing. 
 
-      
+      const result = likeVideo({uid: (videos[index] as VideoProps).uid})
+      // we gotta make this work 
     }
 
 
@@ -126,7 +135,7 @@ export default function SwipePage() {
                   <Card className="overflow-hidden">
                     <CardContent className="p-0">
                       <video
-                        src={`https://storage.googleapis.com/elevatr-${accountType}-processed-videos/${currentVideo.filename}`}
+                        src={`https://storage.googleapis.com/elevatr-${accountType === "startup"? "applicant" : "startup"}-processed-videos/${currentVideo.filename}`}
                         controls
                         autoPlay
                         className="w-full h-[500px] object-cover"
