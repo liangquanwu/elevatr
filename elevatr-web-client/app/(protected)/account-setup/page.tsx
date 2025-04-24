@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
+import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
 import { User } from "firebase/auth";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Textarea } from "../../components/ui/textarea";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "../../components/ui/label";
+import { Label } from "../../../components/ui/label";
 import {
   patchUser,
   uploadPrivateDocument,
-} from "../utilities/firebase/functions";
+} from "../../utilities/firebase/functions";
 
 interface UserProps {
   uid: string;

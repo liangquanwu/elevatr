@@ -1,11 +1,11 @@
 "use client";
 
 import { Fragment } from "react";
-import { signInWithGoogle } from "../utilities/firebase/firebase";
+import { signInWithGoogle } from "../../utilities/firebase/firebase";
 import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
-import { useEffect } from "react";
-import { getUser } from "../utilities/firebase/functions";
+import { useEffect, useState } from "react";
+import { getUser } from "../../utilities/firebase/functions";
 
 interface SignInProps {
   user: User | null;
@@ -19,21 +19,37 @@ interface UserProps {
   bio: string;
   website: string;
   accountType: string;
-  // profilePicture: string;
   resume: string;
   updatedAt: string;
 }
 
 export default function SignIn({ user }: SignInProps) {
   const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const handleUser = async () => {
       if (!user) {
         return;
       }
-      const result = await getUser(user?.uid);
-      const userData = result.data as UserProps;
+
+      setIsCreating(true);
+      let attempts = 0;
+      let userData: UserProps | null = null;
+
+      console.log("Check")
+
+      while (attempts < 5) {
+        const result = await getUser(user.uid);
+        if (result?.data) {
+          userData = result.data as UserProps;
+          setIsCreating(false);
+          break;
+        }
+        attempts++;
+        await new Promise((res) => setTimeout(res, 2000));
+      }
+
       if (userData?.accountType) {
         router.push(`/user/${userData.uid}`);
       } else {
@@ -56,6 +72,11 @@ export default function SignIn({ user }: SignInProps) {
         >
           Sign in with Google
         </button>
+      )}
+      {isCreating && (
+        <div className="mt-4 text-center text-gray-600 text-sm">
+          Creating account… please wait ⏳
+        </div>
       )}
     </Fragment>
   );

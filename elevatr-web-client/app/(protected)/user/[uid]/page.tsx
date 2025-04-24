@@ -1,12 +1,12 @@
 "use client";
 
-import Navbar from "../../navbar/navbar";
+import Navbar from "../../../shared-components/navbar/navbar";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
+import { getUser, getUsersByIds } from "../../../utilities/firebase/functions";
+import backgroundImage from "../../../../public/pexels-thatguycraig000-1574851.jpg";
 import { User } from "firebase/auth";
-import { getUser, getUsersByIds } from "../../utilities/firebase/functions";
-import backgroundImage from "../../pexels-thatguycraig000-1574851.jpg";
+import { useAuth } from "@/app/AuthProvider";
 
 interface UserProps {
   uid: string;
@@ -27,6 +27,7 @@ interface UserProps {
 }
 
 export default function ProfilePage() {
+  const { fbUser } = useAuth(); 
   const params = useParams();
   const uid = params?.uid as string;
   const router = useRouter();
@@ -36,19 +37,13 @@ export default function ProfilePage() {
   const [matchData, setMatchData] = useState<UserProps[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChangedHelper((user) => {
-      setUser(user);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const handleUser = async () => {
-      if (!user) {
+      if (!fbUser) {
         return;
       }
+      console.log(uid)
       const result = await getUser({ uid: uid });
+      console.log(result)
       setUserData(result.data as UserProps);
       if ((result.data as UserProps).matches.length !== 0) {
         const matchData = await getUsersByIds({
@@ -60,10 +55,23 @@ export default function ProfilePage() {
     handleUser();
   }, [user, router]);
 
+  if (!fbUser || !userData) {
+    // 1. auth not done OR 2. Firestore fetch still pending
+    return (
+      <>
+        <Navbar />
+        <main className="flex min-h-screen items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full
+                          border-4 border-gray-300 border-t-green-600" />
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
-      {user?.uid === uid && (
+      {fbUser?.uid === uid && (
         <div className="flex flex items-center flex-col">
           <div className="w-[65vw]">
             <h1 className="text-xl mb-10 mt-5">Your Matches</h1>
@@ -99,7 +107,7 @@ export default function ProfilePage() {
           <h1 className="text-lg">{userData?.displayName}</h1>
         </div>
         <div className="border-2 border-gray-300 h-[40vh] w-[65vw] flex">
-          <div className="mt-[15vh] p-[15px]">
+          <div className="mt-[15vh] p-[15px] w-[45vw]">
             <p>{userData?.bio}</p>
           </div>
           <div className="justify-end">

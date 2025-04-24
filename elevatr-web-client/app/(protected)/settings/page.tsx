@@ -1,15 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { signOut } from "../utilities/firebase/firebase";
-import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
+import { signOut } from "../../utilities/firebase/firebase";
+import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
 import { User } from "firebase/auth";
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import Navbar from "../navbar/navbar";
+import Navbar from "../../shared-components/navbar/navbar";
 
 export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);

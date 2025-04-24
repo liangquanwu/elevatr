@@ -1,6 +1,6 @@
 "use client";
 
-import Navbar from "../navbar/navbar";
+import Navbar from "../../shared-components/navbar/navbar";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
@@ -11,8 +11,8 @@ import {
   getUser,
   patchUser,
   likeVideo,
-} from "../utilities/firebase/functions";
-import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
+} from "../../utilities/firebase/functions";
+import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
 import { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner"; 
@@ -44,6 +44,16 @@ interface VideoProps {
   }
 }
 
+interface VideoDataProps {
+  id: string;
+  uid: string;
+  videoType: string;
+  filename: string;
+  status: "processing" | "processed";
+  title: string;
+  description: string;
+}
+
 interface matchProps {
   data: {
     matched: boolean;
@@ -52,9 +62,9 @@ interface matchProps {
 
 
 export default function SwipePage() {
-  const [videos, setVideos] = useState([]);
+  const [videos, setVideos] = useState<VideoDataProps[]>([]);
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(null);
+  const [direction, setDirection] = useState<string | null>(null);
   const [accountType, setAccountType] = useState("applicant");
 
   const [user, setUser] = useState<User | null>(null);
@@ -81,7 +91,7 @@ export default function SwipePage() {
         videoType:
           account.data.accountType === "startup" ? "applicant" : "startup",
       });
-      const processedVideos = Object.values(vids.data.videos).filter((vid) => {
+      const processedVideos = Object.values((vids.data as { videos: Record<string, VideoDataProps> }).videos).filter((vid) => {
         return vid.status == "processed";
       });
       setVideos(processedVideos);
@@ -90,7 +100,7 @@ export default function SwipePage() {
     fetchVideos();
   }, [user]);
 
-  const handleSwipe = async (dir) => {
+  const handleSwipe = async (dir: string) => {
     if (videos && index >= videos.length) return console.log("No more videos");
 
     if (dir === "right") {
@@ -100,10 +110,9 @@ export default function SwipePage() {
       // If both liked each other add to the match fire store of each user and do some frontend thing.
 
       const result = (await likeVideo({
-        uid: (videos[index] as VideoProps).uid,
+        uid: (videos[index] as VideoDataProps).uid,
       })) as unknown as matchProps;
       if (result?.data?.matched) {
-        console.log("hi");
         toast.success("🎉 You matched!", { duration: 2000 });
       }
       // we gotta make this work
@@ -127,7 +136,7 @@ export default function SwipePage() {
     trackMouse: true,
   });
 
-  const currentVideo = videos[index];
+  const currentVideo = videos[index] as VideoDataProps;
 
   return (
     <div>

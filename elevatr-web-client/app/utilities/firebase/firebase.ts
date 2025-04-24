@@ -12,6 +12,7 @@ import {
 // Create env files before deploying this
 
 import dotenv from "dotenv";
+import { getFirestore } from "firebase/firestore";
 dotenv.config();
 
 const firebaseConfig = {
@@ -45,6 +46,7 @@ export function signOut() {
   return auth.signOut();
 }
 
+export const db = getFirestore(app);
 /**
  * Trigger a callback when user auth state changes.
  * @returns A function to unsubscribe callback.

@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
+import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { onAuthStateChangedHelper } from "./utilities/firebase/firebase";
+import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import SignIn from "./signin/sign-in";

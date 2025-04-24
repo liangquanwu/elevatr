@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import  Upload  from "../upload/upload";
-import Navbar from "../navbar/navbar";
+import Upload from "../upload/upload";
+import Navbar from "../../shared-components/navbar/navbar";
 
 export default function UploadPage() {
 
