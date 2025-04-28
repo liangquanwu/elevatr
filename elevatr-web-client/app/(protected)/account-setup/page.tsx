@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "../../../components/ui/label";
 import {
   patchUser,
-  uploadPrivateDocument,
 } from "../../utilities/firebase/functions";
 
 interface UserProps {
@@ -32,10 +31,6 @@ interface UserProps {
   githubUsername?: string;
 }
 
-interface UploadFileProps {
-  infoFile: File | null;
-}
-
 export default function AccountSetup() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +41,6 @@ export default function AccountSetup() {
   const [linkedinUsername, setLinkedinUsername] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
 
-  const [url, setUrl] = useState("");
   const [bio, setBio] = useState("");
 
   const router = useRouter();
@@ -68,12 +62,6 @@ export default function AccountSetup() {
     };
 
     await patchUser(userData);
-  };
-
-  const handleUploadFiles = async (files: UploadFileProps) => {
-    if (files.infoFile) {
-      await uploadPrivateDocument(files.infoFile);
-    }
   };
 
   useEffect(() => {
@@ -198,7 +186,6 @@ export default function AccountSetup() {
           <div className="space-y-1">
             <Label>Short Bio (Optional)</Label>
             <Textarea
-              required
               placeholder="Short bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}

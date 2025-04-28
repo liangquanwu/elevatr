@@ -28,37 +28,31 @@ export default function SignIn({ user }: SignInProps) {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    const handleUser = async () => {
-      if (!user) {
-        return;
-      }
-
+    if (!user) return;
+  
+    const init = async () => {
       setIsCreating(true);
-      let attempts = 0;
-      let userData: UserProps | null = null;
-
-      while (attempts < 5) {
-        console.log("apple")
-        const result = await getUser(user.uid);
-        if (result?.data) {
-          userData = result.data as UserProps;
-          setIsCreating(false);
-          break;
+      try {
+        await user.getIdToken(true);        
+        const { data } = await getUser() as { data: UserProps };    
+  
+        if (data?.accountType) {
+          router.push(`/user/${data.uid}`);
+        } else {
+          router.push("/account-setup");
         }
-        attempts++;
-        await new Promise((res) => setTimeout(res, 2000));
-        if (attempts === 5) {
-          window.location.reload();
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code === "functions/not-found") {
+          router.push("/account-setup");
+        } else {
+          console.error(err);              
         }
-      }
-
-      if (userData?.accountType) {
-        router.push(`/user/${userData.uid}`);
-      } else {
-        router.push("/account-setup");
+      } finally {
+        setIsCreating(false);
       }
     };
-    handleUser();
+  
+    init();
   }, [user, router]);
 
   const handleSignIn = async () => {

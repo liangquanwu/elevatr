@@ -25,11 +25,18 @@ export default function Home() {
             Elevatr
           </span>
         </h1>
+
         <p className="text-lg md:text-xl text-gray-600 mb-8">
           Connect with startups or applicants through short, powerful elevator
           pitch videos.
         </p>
+
         <SignIn user={user} />
+
+        {/* --- gentle safety note --- */}
+        <p className="mt-6 text-sm text-gray-500 max-w-md mx-auto">
+         Please note that this is a demo application. Please use a test email to create an account. Watch quick runthrough of application on github README file
+        </p>
       </section>
     </main>
   );

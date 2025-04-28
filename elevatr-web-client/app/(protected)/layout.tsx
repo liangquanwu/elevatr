@@ -6,7 +6,7 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { loading, fbUser } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (

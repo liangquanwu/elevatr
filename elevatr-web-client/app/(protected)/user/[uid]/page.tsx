@@ -32,7 +32,7 @@ export default function ProfilePage() {
   const uid = params?.uid as string;
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserProps | null>(null);
   const [matchData, setMatchData] = useState<UserProps[]>([]);
 
