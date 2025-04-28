@@ -10,12 +10,11 @@ const firebaseConfig = {
 };
   
 // gurantees app is initialized only once
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
+if (getApps().length === 0) {
+    initializeApp(firebaseConfig);
+}
 const functions = getFunctions(getApp(), 'us-east1');
 
-const generateProfilePicturesFileUploadUrl = httpsCallable(functions, 'generateProfilePicturesFileUploadUrl')
-const generatePrivateDocumentFileUploadUrl = httpsCallable(functions, 'generatePrivateDocumentFileUploadUrl')
 export const getUser = httpsCallable(functions, 'getUser')
 export const createUser = httpsCallable(functions, 'createUser')
 export const patchUser = httpsCallable(functions, 'patchUser')
@@ -24,43 +23,16 @@ export const getVideos = httpsCallable(functions, 'getVideos')
 export const likeVideo = httpsCallable(functions, 'likeVideos')
 export const getUsersByIds = httpsCallable(functions, 'getUsersByIds')
 
-
-export async function uploadProfilePicture(file: File) {
-    const response: any = await generateProfilePicturesFileUploadUrl({
-        fileExtension: file.name.split('.').pop(),
-        contentType: file.type
-    })
-    await fetch(response?.data?.url, {
-        method: "PUT",
-        body: file,
-        headers: {
-            'Content-Type': file.type
-        }
-    });
-
-    return;
-}
-
-export async function uploadPrivateDocument(file: File) {
-  const response: any = await generatePrivateDocumentFileUploadUrl({
-      fileExtension: file.name.split('.').pop()
-  })
-
-  await fetch(response?.data?.url, {
-      method: "PUT",
-      body: file,
-      headers: {
-          'Content-Type': file.type
-      }
-  });
-
-  return;
+interface UploadUrlResponse {
+    data: {
+        url: string;
+    };
 }
 
 export async function uploadVideo(file: File) {
-    const response: any = await generateUploadUrl({
+    const response = await generateUploadUrl({
         fileExtension: file.name.split('.').pop()
-    })
+    }) as UploadUrlResponse
 
     await fetch(response?.data?.url, {
         method: "PUT",

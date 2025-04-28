@@ -32,18 +32,6 @@ interface UserProps {
   }
 }
 
-interface VideoProps {
-  data: {
-    id: string;
-    uid: string;
-    videoType: string;
-    filename: string;
-    status: "processing" | "processed";
-    title: string;
-    description: string;
-  }
-}
-
 interface VideoDataProps {
   id: string;
   uid: string;

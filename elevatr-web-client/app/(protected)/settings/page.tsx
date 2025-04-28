@@ -8,11 +8,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../../shared-components/navbar/navbar";
 
 export default function SettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [username, setUsername] = useState("larrywu");
-  const [email, setEmail] = useState("larrywu@email.com");
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -22,6 +18,7 @@ export default function SettingsPage() {
         router.push("/"); // redirect if not signed in
       } else {
         setUser(user);
+        console.log("User logged in:", user); 
       }
       setLoading(false);
     });
@@ -36,15 +33,6 @@ export default function SettingsPage() {
       </main>
     );
   }
-
-  const handleSave = () => {
-    console.log("Settings updated:", {
-      username,
-      email,
-      emailNotifications,
-      darkMode,
-    });
-  };
 
   return (
     <div>

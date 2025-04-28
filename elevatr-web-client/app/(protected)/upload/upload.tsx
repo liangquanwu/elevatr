@@ -35,7 +35,7 @@ export default function Upload({ onUpload, loading }: UploadProps) {
         type="button"
         disabled={loading}
         onClick={handleButtonClick}
-        className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2"
+        className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
