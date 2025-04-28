@@ -225,6 +225,7 @@ export const getVideos = onCall(
     const queryRef = firestore
       .collection(videoCollectionId)
       .where("videoType", "==", `${videoTypeData}`)
+      .where("moderation", "==", "clean")
       .orderBy("createdAt", "asc")
       .limit(50);
 

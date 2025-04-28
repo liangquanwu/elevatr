@@ -56,7 +56,6 @@ export default function ProfilePage() {
   }, [user, router]);
 
   if (!fbUser || !userData) {
-    // 1. auth not done OR 2. Firestore fetch still pending
     return (
       <>
         <Navbar />

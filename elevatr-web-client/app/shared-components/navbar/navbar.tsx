@@ -33,7 +33,7 @@ export default function Navbar() {
     <nav className="flex items-center justify-between p-4 border-b shadow-sm">
       <div className="text-xl font-bold flex items-center gap-2">
         <h1 className="text-3xl font-bold">
-          <span className="bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent cursor-pointer" onClick={() => router.push("/")}>
             Elevatr
           </span>
         </h1>{" "}

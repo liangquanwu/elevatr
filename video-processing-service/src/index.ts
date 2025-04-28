@@ -8,14 +8,20 @@ import {
   uploadProcessedVideo,
 } from "./storage";
 import { isVideoNew, setVideo } from "./firestore";
+import {VideoIntelligenceServiceClient, protos} from "@google-cloud/video-intelligence";
+import { Storage } from "@google-cloud/storage";
+
 
 setupDirectories();
 
 const app = express();
 app.use(express.json());
+const storage = new Storage();
 
 // This endpoint will not be invoked by user, this will be invoked by the Cloud Pub/Sub message which is like a message queue
 // Whenever a file is uploaded to raw video bucket, this endpoint will be notified by the cloud pub/sub message queue.
+
+const videoAI = new VideoIntelligenceServiceClient();
 
 app.post("/process-video", async (req, res) => {
   let data;
@@ -32,12 +38,12 @@ app.post("/process-video", async (req, res) => {
     res.status(400).send("Invalid message payload received");
   }
 
-  const inputFileName = data.name; // format of <UID>-<accounttype>-<DATE>.<EXTENSION>
+  const inputFileName = data.name; 
   const accountType = data.name.split("-")[1];
   const outputFileName = `processed-${inputFileName}`;
   const videoId = inputFileName.split(".")[0];
 
-  if (!isVideoNew(videoId)) {
+  if (!(await isVideoNew(videoId))) {
     res.status(400).send("Bad Request: video already processing or processed");
     return;
   } else {
@@ -50,7 +56,6 @@ app.post("/process-video", async (req, res) => {
     });
   }
 
-  // Download the raw video from Cloud Storage
   try {
     await downloadRawVideo(inputFileName, accountType);
   } catch (err: any) {
@@ -59,11 +64,9 @@ app.post("/process-video", async (req, res) => {
     return;
   }
 
-  // Convert the video to 360p
   try {
     await convertVideo(inputFileName, outputFileName);
   } catch (err) {
-    // We would delete this file as these files would be created and we would need to delete these files just in case (corrupted files)
     await Promise.all([
       deleteRawVideo(inputFileName),
       deleteProcessedVideo(outputFileName),
@@ -73,14 +76,43 @@ app.post("/process-video", async (req, res) => {
     return;
   }
 
-  // Upload the processed video to Cloud storage
   await uploadProcessedVideo(outputFileName, accountType);
+
+  const processedBucket =
+  accountType === "applicant"
+    ? "elevatr-applicant-processed-videos"
+    : "elevatr-startup-processed-videos";  
+
+  const gcsUri = `gs://${processedBucket}/${outputFileName}`;
+
+  // Start explicit-content analysis (long-running op)
+  const [operation] = await videoAI.annotateVideo({
+    inputUri: gcsUri,
+    features: [protos.google.cloud.videointelligence.v1.Feature.EXPLICIT_CONTENT_DETECTION], 
+  });
+
+  const [response] = await operation.promise();
+
+  const frames =
+    response.annotationResults?.[0]?.explicitAnnotation?.frames || [];
+
+  const unsafe = frames.some((f) =>
+    ["LIKELY", "VERY_LIKELY"].includes(f.pornographyLikelihood as string)
+  );
 
   await setVideo(videoId, {
     status: "processed",
     filename: outputFileName,
+    moderation: unsafe ? "rejected" : "clean",
+    checkedAt: new Date().toISOString(),
   });
 
+  if (unsafe) {
+    await storage
+      .bucket(processedBucket)
+      .file(outputFileName)
+      .move(`rejected/${outputFileName}`);
+  }
   await Promise.all([
     deleteRawVideo(inputFileName),
     deleteProcessedVideo(outputFileName),

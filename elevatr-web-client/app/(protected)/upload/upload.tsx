@@ -1,53 +1,48 @@
 "use client";
 
-import { Fragment } from "react";
-import { uploadVideo } from "../../utilities/firebase/functions";
+import { Fragment, useRef } from "react";
 
-import styles from "./upload.module.css";
+interface UploadProps {
+  onUpload: (file: File) => Promise<void>;
+  loading: boolean;
+}
 
-export default function Upload() {
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.item(0);
-        if (file) {
-            handleUpload(file);
-        }
+export default function Upload({ onUpload, loading }: UploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleButtonClick = () => {
+    inputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.item(0);
+    if (file) {
+      await onUpload(file);
     }
+  };
 
-    const handleUpload = async (file: File) => {
-        try {
-            console.log(file)
-            const response = await uploadVideo(file);
-            alert(`File uploaded successfully. Response: ${JSON.stringify(response)}`);
-        } catch (error) {
-            alert(`Failed to upload file: ${error}`);
-        }
-    }
-    
   return (
     <Fragment>
       <input
+        ref={inputRef}
         id="upload"
-        className={styles.uploadInput}
         type="file"
         accept="video/*"
         onChange={handleFileChange}
-      ></input>
-      <label htmlFor="upload" className={styles.uploadButton}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.2}
-          stroke="currentColor"
-          className="size-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
-          />
-        </svg>
-      </label>
+        className="hidden"
+      />
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleButtonClick}
+        className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+        ) : (
+          "Upload Video"
+        )}
+      </button>
     </Fragment>
   );
 }

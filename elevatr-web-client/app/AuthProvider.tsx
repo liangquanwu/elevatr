@@ -1,4 +1,3 @@
-// src/app/AuthProvider.tsx
 "use client";
 
 import {
@@ -10,7 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 
 interface ProfileDoc {
-  accountType?: string;  // undefined ⇒ needs onboarding
+  accountType?: string;  
   uid: string;
 }
 
@@ -52,15 +51,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // fetch Firestore doc
-      const snap = await getUser(user.uid);
-      while (!snap) {
-        const snap = await getUser(user.uid);
-      }
+      let snap = await getUser(user.uid);  
+      let retryCount = 0;  
+      const maxRetries = 5;  
+      while (!snap && retryCount < maxRetries) {  
+        retryCount++;  
+        snap = await getUser(user.uid);  
+      }  
+      if (!snap) {  
+        console.error("Failed to fetch user data after maximum retries.");  
+        setProfile(null);  
+        setLoading(false);  
+        return;  
+      }  
       const doc: ProfileDoc = snap.data ? (snap.data as ProfileDoc) : { uid: user.uid };
       setProfile(doc as ProfileDoc);
       setLoading(false);
 
-      // Routing rules --------------------------------
       if (!doc.accountType && !pathname.startsWith("/account-setup")) {
         router.replace("/account-setup");
         return;
@@ -72,7 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   return (

@@ -1,4 +1,3 @@
-// src/app/(protected)/layout.tsx
 "use client";
 import { useAuth } from "@/app/AuthProvider";
 
@@ -17,7 +16,5 @@ export default function ProtectedLayout({
     );
   }
 
-  // fbUser === null means AuthProvider has already redirected to /signin;
-  // this branch is only reached for a split second on fast connections.
   return <>{children}</>;
 }

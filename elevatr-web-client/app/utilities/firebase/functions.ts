@@ -30,8 +30,6 @@ export async function uploadProfilePicture(file: File) {
         fileExtension: file.name.split('.').pop(),
         contentType: file.type
     })
-    // Upload the file via the signed URL
-    // Also add the headers
     await fetch(response?.data?.url, {
         method: "PUT",
         body: file,
@@ -48,8 +46,6 @@ export async function uploadPrivateDocument(file: File) {
       fileExtension: file.name.split('.').pop()
   })
 
-  // Upload the file via the signed URL
-  // Also add the headers
   await fetch(response?.data?.url, {
       method: "PUT",
       body: file,
@@ -66,8 +62,6 @@ export async function uploadVideo(file: File) {
         fileExtension: file.name.split('.').pop()
     })
 
-    // Upload the file via the signed URL
-    // Also add the headers
     await fetch(response?.data?.url, {
         method: "PUT",
         body: file,

@@ -27,6 +27,8 @@ export interface Video {
     title?: string,
     description?: string
     createdAt?: string,
+    moderation?: 'rejected' | 'clean',
+    checkedAt?: string,
 }
 
 async function getVideo(videoId: string) {
