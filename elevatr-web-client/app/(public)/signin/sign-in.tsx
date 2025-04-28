@@ -27,6 +27,7 @@ interface UserProps {
 export default function SignIn({ user }: SignInProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,75 +39,42 @@ export default function SignIn({ user }: SignInProps) {
       setIsCreating(true);
       setError(null);
       let attempts = 0;
-      const maxAttempts = 10;
-      const retryDelay = 1000;
+      let userData: UserProps | null = null;
+      const maxAttempts = 5;
+      const retryDelay = 2000;
 
-      try {
-        while (attempts < maxAttempts) {
-          const result = await getUser(user.uid);
-          
-          if (result?.data) {
-            const userData = result.data as UserProps;
-            setIsCreating(false);
-            
-            logSecurityEvent({
-              type: SecurityEventType.AUTHENTICATION,
-              userId: user.uid,
-              details: { status: 'success', attempts }
-            });
-
-            if (userData.accountType) {
-              router.push(`/user/${userData.uid}`);
-            } else {
-              router.push("/account-setup");
-            }
-            return;
-          }
-
-          attempts++;
-          await new Promise((res) => setTimeout(res, retryDelay));
+      while (attempts < maxAttempts) {
+        const result = await getUser(user.uid);
+        if (result?.data) {
+          userData = result.data as UserProps;
+          setIsCreating(false);
+          break;
         }
+        attempts++;
+        setRetryCount(attempts);
+        await new Promise((res) => setTimeout(res, retryDelay));
+      }
 
-        setError("Unable to load user data. Please try signing in again.");
-        logSecurityEvent({
-          type: SecurityEventType.ERROR,
-          userId: user.uid,
-          details: { 
-            error: 'User data not found after max attempts',
-            attempts: maxAttempts
-          }
-        });
-      } catch (err) {
-        setError("An error occurred. Please try again.");
-        logSecurityEvent({
-          type: SecurityEventType.ERROR,
-          userId: user.uid,
-          details: { 
-            error: err instanceof Error ? err.message : 'Unknown error',
-            attempts
-          }
-        });
-      } finally {
-        setIsCreating(false);
+      if (userData?.accountType) {
+        router.push(`/user/${userData.uid}`);
+      } else if (userData) {
+        router.push("/account-setup");
+      } else {
+        // Only force reload once per session to avoid infinite loop
+        if (!sessionStorage.getItem("elevatrReloaded")) {
+          sessionStorage.setItem("elevatrReloaded", "true");
+          window.location.reload();
+        } else {
+          setError("Unable to load user data. Please try again.");
+          setIsCreating(false);
+        }
       }
     };
-
     handleUser();
   }, [user, router]);
 
   const handleSignIn = async () => {
-    try {
-      setError(null);
-      await signInWithGoogle();
-    } catch (err) {
-      setError("Failed to sign in. Please try again.");
-      logSecurityEvent({
-        type: SecurityEventType.ERROR,
-        details: { 
-          error: err instanceof Error ? err.message : 'Sign in failed'
-        }
-      });
-    }
+    await signInWithGoogle();
   };
 
   return (
@@ -128,12 +96,14 @@ export default function SignIn({ user }: SignInProps) {
       )}
       {isCreating && (
         <div className="mt-4 text-center text-gray-600 text-sm">
-          Loading details… please wait ⏳
+          Setting up your account… please wait ⏳
+          {retryCount > 2 && <div>(This can take a few seconds for new accounts)</div>}
         </div>
       )}
       {error && (
         <div className="mt-4 text-center text-red-600 text-sm">
           {error}
+          <button onClick={() => window.location.reload()} className="ml-2 underline text-blue-600">Try Again</button>
         </div>
       )}
     </Fragment>
