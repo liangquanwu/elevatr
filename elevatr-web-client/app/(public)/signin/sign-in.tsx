@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { getUser } from "../../utilities/firebase/functions";
+import { logSecurityEvent, SecurityEventType } from "../../utilities/security/logger";
 
 interface SignInProps {
   user: User | null;
@@ -26,6 +27,7 @@ interface UserProps {
 export default function SignIn({ user }: SignInProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleUser = async () => {
@@ -34,33 +36,77 @@ export default function SignIn({ user }: SignInProps) {
       }
 
       setIsCreating(true);
+      setError(null);
       let attempts = 0;
-      let userData: UserProps | null = null;
+      const maxAttempts = 10;
+      const retryDelay = 1000;
 
-      console.log("Check");
+      try {
+        while (attempts < maxAttempts) {
+          const result = await getUser(user.uid);
+          
+          if (result?.data) {
+            const userData = result.data as UserProps;
+            setIsCreating(false);
+            
+            logSecurityEvent({
+              type: SecurityEventType.AUTHENTICATION,
+              userId: user.uid,
+              details: { status: 'success', attempts }
+            });
 
-      while (attempts < 5) {
-        const result = await getUser(user.uid);
-        if (result?.data) {
-          userData = result.data as UserProps;
-          setIsCreating(false);
-          break;
+            if (userData.accountType) {
+              router.push(`/user/${userData.uid}`);
+            } else {
+              router.push("/account-setup");
+            }
+            return;
+          }
+
+          attempts++;
+          await new Promise((res) => setTimeout(res, retryDelay));
         }
-        attempts++;
-        await new Promise((res) => setTimeout(res, 2000));
-      }
 
-      if (userData?.accountType) {
-        router.push(`/user/${userData.uid}`);
-      } else {
-        router.push("/account-setup");
+        setError("Unable to load user data. Please try signing in again.");
+        logSecurityEvent({
+          type: SecurityEventType.ERROR,
+          userId: user.uid,
+          details: { 
+            error: 'User data not found after max attempts',
+            attempts: maxAttempts
+          }
+        });
+      } catch (err) {
+        setError("An error occurred. Please try again.");
+        logSecurityEvent({
+          type: SecurityEventType.ERROR,
+          userId: user.uid,
+          details: { 
+            error: err instanceof Error ? err.message : 'Unknown error',
+            attempts
+          }
+        });
+      } finally {
+        setIsCreating(false);
       }
     };
+
     handleUser();
   }, [user, router]);
 
   const handleSignIn = async () => {
-    await signInWithGoogle();
+    try {
+      setError(null);
+      await signInWithGoogle();
+    } catch (err) {
+      setError("Failed to sign in. Please try again.");
+      logSecurityEvent({
+        type: SecurityEventType.ERROR,
+        details: { 
+          error: err instanceof Error ? err.message : 'Sign in failed'
+        }
+      });
+    }
   };
 
   return (
@@ -83,6 +129,11 @@ export default function SignIn({ user }: SignInProps) {
       {isCreating && (
         <div className="mt-4 text-center text-gray-600 text-sm">
           Loading details… please wait ⏳
+        </div>
+      )}
+      {error && (
+        <div className="mt-4 text-center text-red-600 text-sm">
+          {error}
         </div>
       )}
     </Fragment>
