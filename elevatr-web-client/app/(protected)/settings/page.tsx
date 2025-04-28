@@ -1,15 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { signOut } from "../utilities/firebase/firebase";
-import { onAuthStateChangedHelper } from "../utilities/firebase/firebase";
+import { signOut } from "../../utilities/firebase/firebase";
+import { onAuthStateChangedHelper } from "../../utilities/firebase/firebase";
 import { User } from "firebase/auth";
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import Navbar from "../navbar/navbar";
+import Navbar from "../../shared-components/navbar/navbar";
 
 export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -53,12 +49,20 @@ export default function SettingsPage() {
   return (
     <div>
       <Navbar />
-      <button
+      <div className="flex flex-col items-center justify-center text-center h-screen">
+        <h1 className="text-2xl font-bold">See you next time!</h1>
+        <p className="text-gray-600 mt-2 max-w-md">
+          You put in a lot of effort to make this work. We appreciate your time
+          and effort. We are always here to help you with your journey to find
+          your best fit.
+        </p>
+        <button
           onClick={signOut}
-          className="w-[100px] bg-black text-white border border-white py-2 rounded hover:bg-gray-900 transition align-self-end"
+          className="w-[100px] bg-black text-white border border-white py-2 rounded hover:bg-gray-900 transition mt-5"
         >
           Log Out
-        </button>{" "}
+        </button>
+      </div>
     </div>
   );
 }
