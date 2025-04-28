@@ -4,20 +4,23 @@
 import { Storage } from "@google-cloud/storage";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
-import * as dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const storage = new Storage();
 
-// Environment variables for bucket names
-const rawApplicantVideoBucketName = process.env.RAW_APPLICANT_VIDEO_BUCKET || 'elevatr-applicant-raw-videos';
-const rawStartupVideoBucketName = process.env.RAW_STARTUP_VIDEO_BUCKET || 'elevatr-startup-raw-videos';
-const processedApplicantVideoBucketName = process.env.PROCESSED_APPLICANT_VIDEO_BUCKET || 'elevatr-applicant-processed-videos';
-const processedStartupVideoBucketName = process.env.PROCESSED_STARTUP_VIDEO_BUCKET || 'elevatr-startup-processed-videos';
+// google cloud storage bucket strings has to be globally unique
+
+// Download from this bucket
+// const rawVideoBucketName = process.env.RAW_VIDEO_BUCKET!;
+const rawStartupVideoBucketName = "elevatr-startup-raw-videos";
+const rawApplicantVideoBucketName = "elevatr-applicant-raw-videos";
+const processedStartupVideoBucketName = "elevatr-startup-processed-videos";
+const processedApplicantVideoBucketName = "elevatr-applicant-processed-videos";
 
 const localRawVideoPath = "./raw-videos";
-const localProcessedVideoPath = process.env.LOCAL_PROCESSED_VIDEO_PATH || './processed-videos';
+const localProcessedVideoPath = "./processed-videos";
 
 // Creates local directory within docker container for the raw files and processes files
 export function setupDirectories() {
@@ -76,10 +79,11 @@ export async function uploadProcessedVideo(fileName: string, accountType: string
     const bucket = storage.bucket(accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName);
     await storage.bucket(accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName).upload(`${localProcessedVideoPath}/${fileName}`, {
         destination: fileName
-    });
+    })
     console.log(`gs://${accountType === "applicant" ? processedApplicantVideoBucketName : processedStartupVideoBucketName}/${fileName} uploaded to ${localProcessedVideoPath}/${fileName}`);
     // Any one with a link can view this file without authentication
     await bucket.file(fileName).makePublic();
+    // see what else we need to add here for authentication
 }
 
 /**

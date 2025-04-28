@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { getUser } from "../../utilities/firebase/functions";
-import { logSecurityEvent, SecurityEventType } from "../../utilities/security/logger";
 
 interface SignInProps {
   user: User | null;
@@ -37,7 +36,6 @@ export default function SignIn({ user }: SignInProps) {
       }
 
       setIsCreating(true);
-      setError(null);
       let attempts = 0;
       let userData: UserProps | null = null;
       const maxAttempts = 5;
@@ -74,6 +72,7 @@ export default function SignIn({ user }: SignInProps) {
   }, [user, router]);
 
   const handleSignIn = async () => {
+    await signInWithGoogle();
     await signInWithGoogle();
   };
 

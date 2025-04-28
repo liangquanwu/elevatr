@@ -1,11 +1,8 @@
 [
     {
-        "origin": [
-            "https://elevatr-web-client.vercel.app",
-            "http://localhost:3000"
-        ],
-        "responseHeader": ["Content-Type", "Authorization"],
-        "method": ["PUT", "GET", "DELETE"],
+        "origin": ["*"],
+        "responseHeader": ["Content-Type"],
+        "method": ["PUT"],
         "maxAgeSeconds": 3600
     }
 ]
