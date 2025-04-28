@@ -4,6 +4,8 @@ Elevatr is a full-stack web app where startups and applicants upload short eleva
 
 The platform is powered by Firebase, Google Cloud Platform, FFmpeg, Cloud Run, Docker, and Next.js — everything runs serverlessly for maximum scalability. Built and deployed using a **Mac** environment in the **`us-east1`** GCP region.
 
+Try the website here: https://elevatr-web-client-799609004854.us-east1.run.app/
+
 ## 🚀 Built With
 
 <p align="left">
