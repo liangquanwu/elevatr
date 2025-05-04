@@ -41,9 +41,7 @@ export default function ProfilePage() {
       if (!fbUser) {
         return;
       }
-      console.log(uid)
       const result = await getUser({ uid: uid });
-      console.log(result)
       setUserData(result.data as UserProps);
       if ((result.data as UserProps).matches.length !== 0) {
         const matchData = await getUsersByIds({

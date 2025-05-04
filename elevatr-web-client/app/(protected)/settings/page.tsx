@@ -18,7 +18,6 @@ export default function SettingsPage() {
         router.push("/"); // redirect if not signed in
       } else {
         setUser(user);
-        console.log("User logged in:", user); 
       }
       setLoading(false);
     });

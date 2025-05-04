@@ -15,7 +15,6 @@ export default function UploadPage() {
       setLoading(true);
       const response = await uploadVideo(file);
       toast.success("Video uploaded successfully!");
-      console.log(response);
     } catch (error) {
       toast.error("Failed to upload video");
       console.error(error);

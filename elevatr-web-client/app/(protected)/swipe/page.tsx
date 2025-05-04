@@ -54,6 +54,7 @@ export default function SwipePage() {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<string | null>(null);
   const [accountType, setAccountType] = useState("applicant");
+  const [isLoading, setIsLoading] = useState(true);
 
   const [user, setUser] = useState<User | null>(null);
 
@@ -69,9 +70,11 @@ export default function SwipePage() {
 
   useEffect(() => {
     const fetchVideos = async () => {
+      setIsLoading(true);
       if (!user) return;
       const account = (await getUser(user.uid)) as unknown as UserProps;
       if (!account) {
+        setIsLoading(false);
         return;
       }
       setAccountType(account.data.accountType); // also update state if needed
@@ -83,6 +86,7 @@ export default function SwipePage() {
         return vid.status == "processed";
       });
       setVideos(processedVideos);
+      setIsLoading(false);
     };
 
     fetchVideos();
@@ -129,6 +133,11 @@ export default function SwipePage() {
   return (
     <div>
       <Navbar />
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+        </div>
+      ) : (
       <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-white to-gray-100 text-black">
         {index >= videos.length ? (
           <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -178,6 +187,7 @@ export default function SwipePage() {
           </div>
         )}
       </main>
+      )}
     </div>
   );
 }

@@ -197,8 +197,6 @@ export const generateUploadUrl = onCall(
     const fileName = `${auth.uid}-${accountType}-${Date.now()}.${
       data.fileExtension}`;
 
-    console.log(fileName);
-
     // Get a v4 signed URL for uploading a file
     const [url] = await bucket.file(fileName).getSignedUrl({
       version: "v4",
