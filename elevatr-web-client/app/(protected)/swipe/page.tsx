@@ -78,6 +78,9 @@ export default function SwipePage() {
         return;
       }
       setAccountType(account.data.accountType); // also update state if needed
+      if (account.data.lastSeenIndex !== undefined) {
+        setIndex(account.data.lastSeenIndex);
+      }
       const vids = await getVideos({
         videoType:
           account.data.accountType === "startup" ? "applicant" : "startup",

@@ -13,7 +13,7 @@ export default function UploadPage() {
   const handleUpload = async (file: File) => {
     try {
       setLoading(true);
-      const response = await uploadVideo(file);
+      await uploadVideo(file);
       toast.success("Video uploaded successfully!");
     } catch (error) {
       toast.error("Failed to upload video");
