@@ -1,6 +1,20 @@
 # Stage 1: Build stage
 FROM node:20 AS builder
 
+# Accept Firebase build-time secrets
+ARG NEXT_PUBLIC_API_KEY
+ARG NEXT_PUBLIC_AUTH_DOMAIN
+ARG NEXT_PUBLIC_PROJECT_ID
+ARG NEXT_PUBLIC_APP_ID
+ARG NEXT_PUBLIC_MEASUREMENT_ID
+
+# Make env vars available during build
+ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
+ENV NEXT_PUBLIC_AUTH_DOMAIN=$NEXT_PUBLIC_AUTH_DOMAIN
+ENV NEXT_PUBLIC_PROJECT_ID=$NEXT_PUBLIC_PROJECT_ID
+ENV NEXT_PUBLIC_APP_ID=$NEXT_PUBLIC_APP_ID
+ENV NEXT_PUBLIC_MEASUREMENT_ID=$NEXT_PUBLIC_MEASUREMENT_ID
+
 # Set the working directory
 WORKDIR /app
 
@@ -13,7 +27,7 @@ RUN npm install
 # Copy the rest of the app
 COPY . .
 
-# Build the app (env vars from --env-file will be available)
+# Build the app
 RUN npm run build
 
 # Stage 2: Production stage
