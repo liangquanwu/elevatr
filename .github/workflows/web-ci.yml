@@ -65,7 +65,13 @@ jobs:
       - name: Build and Push Docker Image
         working-directory: elevatr-web-client
         run: |
+          echo "NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }}" > .env
+          echo "NEXT_PUBLIC_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_AUTH_DOMAIN }}" >> .env
+          echo "NEXT_PUBLIC_PROJECT_ID=${{ secrets.NEXT_PUBLIC_PROJECT_ID }}" >> .env
+          echo "NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }}" >> .env
+          echo "NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }}" >> .env
           docker build --platform linux/amd64 \
+            --env-file .env \
             -t us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client .
           docker push us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client
 
