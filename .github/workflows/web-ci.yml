@@ -31,16 +31,22 @@ jobs:
           cache-dependency-path: 'elevatr-web-client/package-lock.json'
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci --prefer-offline --no-audit
+          npm list
 
       - name: Run Tests
-        run: npm test
+        run: |
+          npm test -- --verbose
 
       - name: Run Lint
-        run: npm run lint
+        run: |
+          npm run lint -- --max-warnings=0
 
       - name: Build
-        run: npm run build
+        run: |
+          npm run build
+          ls -la .next
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
