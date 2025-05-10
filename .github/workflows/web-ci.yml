@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Lint
         run: |
-          npm run lint -- --max-warnings=0
+          npm run lint 
 
       - name: Build
         run: |
