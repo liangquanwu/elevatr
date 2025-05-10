@@ -1,0 +1,60 @@
+name: Web Client CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'elevatr-web-client/**'
+
+  pull_request:
+    branches: [main]
+    paths:
+      - 'elevatr-web-client/**'
+
+  workflow_dispatch: # manual deploy trigger
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elevatr-web-client
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - run: npm ci
+      - run: npm test
+
+      - uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+okay 
+      - run: gcloud auth configure-docker us-east1-docker.pkg.dev
+
+      - run: |
+          docker build --platform linux/amd64 \
+            -t us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client .
+          docker push us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client
+
+  deploy:
+    needs: build-and-test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - run: |
+          gcloud run deploy elevatr-web-client \
+            --image=us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client \
+            --platform=managed \
+            --region=us-east1 \
+            --allow-unauthenticated \
+            --project=elevatr-73c8c
