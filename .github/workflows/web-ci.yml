@@ -21,22 +21,36 @@ jobs:
         working-directory: elevatr-web-client
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: npm
 
-      - run: npm ci
-      - run: npm test
+      - name: Install Dependencies
+        run: npm ci
 
-      - uses: google-github-actions/auth@v1
+      - name: Run Tests
+        run: npm test
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-okay 
-      - run: gcloud auth configure-docker us-east1-docker.pkg.dev
 
-      - run: |
+      - name: Configure Docker
+        run: gcloud auth configure-docker us-east1-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
           docker build --platform linux/amd64 \
             -t us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client .
           docker push us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client
@@ -47,11 +61,13 @@ okay
     runs-on: ubuntu-latest
 
     steps:
-      - uses: google-github-actions/auth@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - run: |
+      - name: Deploy to Cloud Run
+        run: |
           gcloud run deploy elevatr-web-client \
             --image=us-east1-docker.pkg.dev/elevatr-73c8c/elevatr-web-client-repo/elevatr-web-client \
             --platform=managed \
