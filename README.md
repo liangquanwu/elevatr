@@ -20,7 +20,7 @@ Try the website here: https://elevatr-web-client-799609004854.us-east1.run.app/
 
 ## System Architecture
 
-<img width="1776" height="992" alt="88D7D51E-8BC5-47E2-8D86-4D8E8DA7E29A" src="https://github.com/user-attachments/assets/abb73485-e2f1-47d5-926e-09fdac047f13" />
+<img width="1448" height="1086" alt="System Architecture Picture" src="https://github.com/user-attachments/assets/39f88c1f-549c-4f05-9255-435f3761190a" />
 
 ## Table of Contents
 - [Features](#features)
