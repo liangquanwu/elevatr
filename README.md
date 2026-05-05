@@ -1,8 +1,8 @@
 # Elevatr: Swipeable Elevator Pitch Video Platform
 
-Elevatr is a full-stack web app where startups and applicants upload short elevator pitch videos — then swipe through each other like Tinder, but with a purpose. Applicants can browse and react to startups, and startups can do the same in return. Think TikTok meets job fairs, powered by real-time matching and bite-sized videos.
+Elevatr is a full-stack web app where startups and applicants upload short elevator pitch videos — then swipe through each other like Tinder, but with a purpose. Applicants can browse and react to short pitches to discover potential team members or opportunities.
 
-The platform is powered by Firebase, Google Cloud Platform, FFmpeg, Cloud Run, Docker, and Next.js — everything runs serverlessly for maximum scalability. Built and deployed using a **Mac** environment in the **`us-east1`** GCP region.
+The platform is powered by Firebase, Google Cloud Platform, FFmpeg, Cloud Run, Docker, and Next.js — everything runs serverlessly for maximum scalability. Built and deployed using a **Mac** environment.
 
 Try the website here: https://elevatr-web-client-799609004854.us-east1.run.app/
 
@@ -86,112 +86,121 @@ Try the website here: https://elevatr-web-client-799609004854.us-east1.run.app/
 cd elevatr-video-service
 npm install
 ```
+
 2. **Install FFmpeg** (on Mac using Homebrew):
 ```bash
 brew install ffmpeg
 ```
-3. Test Locally:
+
+3. **Test Locally**:
 ```bash
 npm run start
 ```
-4. Dockerize:
 
-- Add Dockerfile and .dockerignore
-
+4. **Dockerize**:
+- Add `Dockerfile` and `.dockerignore`
 - Build image:
 ```bash
 docker build --platform linux/amd64 -t elevatr-video-service .
 ```
+
 ---
+
 ## Cloud Storage & Pub/Sub
 
-1. **Create Buckets:**:
-
+1. **Create Buckets:**
 ```bash
 gsutil mb -l us-east1 --pap=enforced gs://elevatr-raw-videos
 gsutil mb -l us-east1 gs://elevatr-processed-videos
 ```
-2. **Configure Notification:**:
+
+2. **Configure Notification:**
 ```bash
 gsutil notification create -t elevatr-topic -f json -e OBJECT_FINALIZE gs://elevatr-raw-videos
 ```
-3. Create Pub/Sub Topic + Subscription:
+
+3. **Create Pub/Sub Topic + Subscription:**
 ```bash
 gcloud pubsub topics create elevatr-topic
 gcloud pubsub subscriptions create elevatr-subscription --topic=elevatr-topic --push-endpoint=YOUR_CLOUD_RUN_URL
 ```
+
 ---
+
 ## Firebase Functions
 
-1. **Init Functions:**:
-
+1. **Init Functions:**
 ```bash
 mkdir elevatr-api-service && cd elevatr-api-service
 firebase init functions
 ```
-2. **Install & Write Functions:**:
+
+2. **Install & Write Functions:**
 ```bash
 npm install firebase-functions@latest firebase-admin@latest @google-cloud/storage
 ```
-3. Deploy:
+
+3. **Deploy:**
 ```bash
 firebase deploy --only functions
 ```
-4. Functions Created:
 
-- createUser: Firestore user creation on auth
-
-- generateUploadUrl: Creates signed upload URL
-
-- getVideos: Retrieves list of processed videos
+4. **Functions Created:**
+- `createUser`: Firestore user creation on auth
+- `generateUploadUrl`: Creates signed upload URL
+- `getVideos`: Retrieves list of processed videos
 
 ---
+
 ## Frontend Setup (Next.js)
 
-1. **Create App:**:
-
+1. **Create App:**
 ```bash
-mkdir elevatr-api-service && cd elevatr-api-service
-firebase init functions
+npx create-next-app@latest elevatr-web-client
+cd elevatr-web-client
 ```
-2. **Add Firebase SDK:**:
+
+2. **Add Firebase SDK:**
 ```bash
 npm install firebase
 ```
-3. Pages Created:
 
-- /: Home with video thumbnails
+3. **Pages Created:**
+- `/`: Home with video thumbnails
+- `/watch?v=...`: Watch page with embedded video
 
-- /watch?v=...: Watch page with embedded video
-
-
-4. Components:
-
+4. **Components:**
 - Navbar (with Google Sign In)
-
 - Upload Button (uses signed URLs)
 
-5. Firebase Auth + Firestore Setup
-
+5. **Firebase Auth + Firestore Setup**
 - Enable Google Sign-in in Firebase Console
-
 - Create Firestore DB in production mode
 
 ---
 
 ## Deployment
 
-1. Artifact Registry + Build:
+> **Note on Naming Conventions:** 
+> - `elevatr-video-repo` is the name of your Artifact Registry repository on Google Cloud.
+> - `elevatr-video-service` is the name of your Docker image and Cloud Run service.
+
+1. **Artifact Registry + Build:**
 
 ```bash
-gcloud artifacts repositories create elevatr-video-repo --repository-format=docker --location=us-east1
+# Create the Artifact Registry repository
+gcloud artifacts repositories create elevatr-video-repo \
+  --repository-format=docker \
+  --location=us-east1
 
+# Build the Docker image
 docker build --platform linux/amd64 -t us-east1-docker.pkg.dev/<PROJECT_ID>/elevatr-video-repo/elevatr-video-service .
 
+# Push the Docker image to Artifact Registry
 docker push us-east1-docker.pkg.dev/<PROJECT_ID>/elevatr-video-repo/elevatr-video-service
 ```
 
-2. Deploy to Cloud Run:
+2. **Deploy to Cloud Run:**
 
 ```bash
 gcloud run deploy elevatr-video-service \
@@ -206,22 +215,18 @@ gcloud run deploy elevatr-video-service \
   --ingress=internal
 ```
 
-Please reach out regarding these commands, there are 2 different names for elevatr-video-repo/elevatr-video-service
-
-3. Assign Roles
-
+3. **Assign Roles:**
 - Grant Storage Object Admin + Service Account Token Creator to Cloud Function SA
-
-- run.invoker for generateUploadUrl
+- Grant `run.invoker` for `generateUploadUrl`
 
 ---
 
 ## Troubleshooting 
 
-- CORS Errors: Run GCS CORS config command with utils/gcs-cors.json
-- Firebase deploy fails: Delete node_modules & retry npm install
-- Signed URL issues: Check IAM permissions for functions
-- Slow processing: Pub/Sub may re-deliver messages, add idempotency using Firestore status field
+- **CORS Errors**: Run GCS CORS config command with `utils/gcs-cors.json`
+- **Firebase deploy fails**: Delete `node_modules` & retry `npm install`
+- **Signed URL issues**: Check IAM permissions for functions
+- **Slow processing**: Pub/Sub may re-deliver messages, add idempotency using Firestore status field
 
 ---
 
@@ -235,4 +240,4 @@ Please reach out regarding these commands, there are 2 different names for eleva
 
 ## License
 
-Will work on this
+This project is open-source and available under the [MIT License](LICENSE).
