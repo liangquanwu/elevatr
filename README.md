@@ -18,6 +18,10 @@ Try the website here: https://elevatr-web-client-799609004854.us-east1.run.app/
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/></a>
 </p>
 
+## System Architecture
+
+<img width="1776" height="992" alt="88D7D51E-8BC5-47E2-8D86-4D8E8DA7E29A" src="https://github.com/user-attachments/assets/abb73485-e2f1-47d5-926e-09fdac047f13" />
+
 ## Table of Contents
 - [Features](#features)
 - [Tech Stack](#tech-stack)
